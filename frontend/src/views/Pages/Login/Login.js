@@ -36,13 +36,6 @@ class Login extends Component {
     this.usernameRef = React.createRef();
   }
 
-  validateForm() {
-    return (this.state.username.length >= 1) &&
-      (this.state.password.length >= 1) &&
-      !this.state.isUsernameError &&
-      !this.state.isPasswordError;
-  }
-
   validateUsername = () => {
     if (this.state.username.length >= 1 && this.state.username.length <= 20) {
       this.setState({
@@ -147,8 +140,7 @@ class Login extends Component {
           <Grid container>
             <Grid item xs={6}>
               <br/>
-              <Button variant="contained" color="primary" disabled={!this.validateForm()}
-                      onClick={this.handleSubmit}>
+              <Button variant="contained" color="primary" onClick={this.handleSubmit}>
                 Login
               </Button>
             </Grid>
