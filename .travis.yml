@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+  - "stable"
+  - "11"
+  - "10"
+before_script:
+  - export CI=true
+services:
+  - mongodb
+install:
+  - yarn install
+  - cd ./frontend && yarn install
+  - cd ../
+script:
+  - yarn test
+  - cd ./frontend && yarn test

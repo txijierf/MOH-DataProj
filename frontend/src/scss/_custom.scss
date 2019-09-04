@@ -1,0 +1,57 @@
+// Here you can add other styles
+button:focus {
+  outline: none
+}
+
+.dropdownArrow {
+  font-size: 10px;
+  color: #c1c1c1;
+  float: right;
+  position: relative;
+}
+
+.dropdownArrow:hover {
+  color: #4f4f4f;
+}
+
+.row-header {
+  text-align: center;
+  overflow: hidden;
+  background: rgb(247, 248, 249);
+  color: rgb(87, 90, 95);
+  border-right: 1px solid rgb(185, 185, 185);
+  //border-bottom: 1px solid rgb(185, 185, 185);
+  font-size: 13px;
+  //transition: all 0.1s;
+}
+
+.col-header {
+  text-align: center;
+  overflow: hidden;
+  background: rgb(247, 248, 249);
+  color: rgb(87, 90, 95);
+  //border-right: 1px solid rgb(185, 185, 185);
+  border-bottom: 1px solid rgb(185, 185, 185);
+  font-size: 13px;
+  //transition: all 0.1s;
+}
+
+.col-header:hover {
+  background: rgb(184, 226, 196);
+}
+
+.row-header:hover {
+  background: rgb(184, 226, 196);
+}
+
+.col-header.highlight {
+  background: rgb(200, 200, 200);
+}
+
+.row-header.highlight {
+  background: rgb(200, 200, 200);
+}
+
+.app-body {
+  overflow-x: inherit;
+}
