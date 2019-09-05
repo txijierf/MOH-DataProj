@@ -1,21 +1,23 @@
+// Server and Express
 import express from "express";
 import http from "http";
 
 import path from "path";
+import bodyParser from "body-parser";
 
-import { setupDatabases } from "./utils";
+import cookieParser from "cookie-parser";
+import cookieSession from "cookie-session";
 
+import cors from "cors";
+
+// Authentication
 import passport from "passport";
 import LocalStrategy from "passport-local";
 
-import cookieParser from "cookie-parser";
-import bodyParser from "body-parser";
-
-import cookieSession from "cookie-session";
-import cors from "cors";
 import config from "./config/config";
 import error from "./config/error";
 
+// Routes
 import indexRouter from "./routes/index";
 import usersRouter from "./routes/users"
 import packageRouter from "./routes/v2/package02";
@@ -25,6 +27,8 @@ import userManagementRouter from "./routes/userManagement";
 import RouterV2 from "./routes/v2";
 import User from "./models/user";
 import setup from "./controller/setup";
+
+import { setupDatabases } from "./utils";
 
 // Deprecated warning with es6 import for morgan
 // import logger from "morgan";
@@ -39,25 +43,23 @@ const _init = async () => {
     const app = express();
 
     app.set('port', process.env.PORT || 3000);
-    
-    app.set('views', __dirname + '/views');
-    app.set('view engine', 'ejs');
-    app.use(express.static(path.join(__dirname, 'public/moh.css')));
 
     await setupDatabases({ createDatabase: false });
     
-    app.use(cors({ credentials: true }));
+    app.use(cors({ credentials: true, origin: (_origin, callback) => callback(null, true) }));
 
     //log every request to the CONSOLE.
     app.use(logger("dev")); 
     app.use(bodyParser.json({limit: '50mb'}));
     app.use(bodyParser.urlencoded({extended: false, limit: '50mb'}));
-    app.use(cookieParser());
-    app.use(express.static(path.join(__dirname, 'public')));
+    
+    // TODO: Find the purpose of these three
     app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
     app.use('/documents', express.static(path.join(__dirname, 'documents')));
     app.use('/test', express.static(path.join(__dirname, 'mochawesome-report')));
     
+    // Cookies and sessions
+    app.use(cookieParser());
     app.use(cookieSession({
       name: 'session',
       secret: config.superSecret,
@@ -73,12 +75,14 @@ const _init = async () => {
     
     setup.setup();
     
+    //ROUTES
     // home page
     app.use('/', indexRouter);
+
     // user authentication related
-    app.use('/', usersRouter); // API or pages below this requires authentication
+    app.use('/', usersRouter);
+
     // api endpoints that need authentication
-    
     app.use('/', packageRouter);
     app.use('/', userManagementRouter);
     app.use('/', ...RouterV2);
@@ -104,6 +108,7 @@ const _init = async () => {
       }
     });
 
+    // Setup and start of server
     const server = http.createServer(app)
       .on('error', (error) => {
         console.error(`Failed to start app in ${mode} mode`);
