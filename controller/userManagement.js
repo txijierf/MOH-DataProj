@@ -23,11 +23,11 @@ module.exports = {
             return res.status(403).json({success: false, message: error.api.NO_PERMISSION})
         } else {
             const permission = req.body.permissions;
-            let fails = [],
-                promiseArr = [],
-                // activesArr = [];
-    
-            for (let i = 0; i < permission.length; i++) {
+            let fails = [];
+            let promiseArr = [];
+            // activesArr = [];
+
+            for(let i = 0; i < permission.length; i++) {
                 const username = permission[i].username;
                 const permissions = permission[i].permissions;
                 let filteredPermissions = [];
