@@ -3,7 +3,6 @@ import http from "http";
 
 import path from "path";
 
-// import mongoose from "mongoose";
 import { setupDatabases } from "./utils";
 
 import passport from "passport";
@@ -11,7 +10,6 @@ import LocalStrategy from "passport-local";
 
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
-import logger from "morgan";
 
 import cookieSession from "cookie-session";
 import cors from "cors";
@@ -28,12 +26,20 @@ import RouterV2 from "./routes/v2";
 import User from "./models/user";
 import setup from "./controller/setup";
 
+// Deprecated warning with es6 import for morgan
+// import logger from "morgan";
+const logger = require("morgan");
 
 const _init = async () => {
+  const mode = process.env.NODE_ENV;
+
+  console.log(`Starting app in ${mode} mode`);
+
   try {
     const app = express();
 
     app.set('port', process.env.PORT || 3000);
+    
     app.set('views', __dirname + '/views');
     app.set('view engine', 'ejs');
     app.use(express.static(path.join(__dirname, 'public/moh.css')));
@@ -41,9 +47,9 @@ const _init = async () => {
     await setupDatabases({ createDatabase: false });
     
     app.use(cors({ credentials: true }));
-    
+
     //log every request to the CONSOLE.
-    app.use(logger('dev')); 
+    app.use(logger("dev")); 
     app.use(bodyParser.json({limit: '50mb'}));
     app.use(bodyParser.urlencoded({extended: false, limit: '50mb'}));
     app.use(cookieParser());
@@ -97,25 +103,20 @@ const _init = async () => {
         })
       }
     });
+
+    const server = http.createServer(app)
+      .on('error', (error) => {
+        console.error(`Failed to start app in ${mode} mode`);
+        throw error;
+      });
     
-    const server = http.createServer(app);
-    
-    server.on('error', (e) => {
-      if (e.code === 'EADDRINUSE') {
-        console.log('Address in use, exited...');
-        process.exit(1);
-      }
-    });
-    
-    if (process.env.NODE_ENV !== 'test') {
+    if (mode !== 'test') {
       server.listen(app.get('port'), function () {
-        console.log("Express server listening on port " + app.get('port'));
+        console.log(`Successfully started app in ${mode} mode\nExpress server listening on port ${app.get('port')}`);
       });
     }
-    
-    console.log('in ' + process.env.NODE_ENV + ' mode');
   } catch(error) {
-
+    console.error(`Failed to start app in ${mode} mode`, error);
   }
 };
 

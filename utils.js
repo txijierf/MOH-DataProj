@@ -54,7 +54,7 @@ const _setupMongoose = async (options) => {
 
       console.log("MongoDB: Successfully set up database");
     } catch (error) {
-      console.log("MongoDB: Failed to set up database", error);
+      console.error("MongoDB: Failed to set up database", error);
     }
   };
 
@@ -69,6 +69,6 @@ export const setupDatabases = async (options) => {
 
     console.log("Databases: Successfully set up databases");
   } catch (error) {
-    console.log("Databases: Failed to set up databases", error);
+    console.error("Databases: Failed to set up databases", error);
   }
 };
