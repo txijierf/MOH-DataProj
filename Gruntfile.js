@@ -76,7 +76,7 @@ module.exports = function (grunt) {
             },
 
             pivotal: {
-                exec: `cd ./build/zip && cf push ${pivotal.appName} -c "node app.js"`
+                exec: `cd ./build/zip && cf push ${pivotal.appName} -c "node -r esm app.js"`
             }
         },
 
