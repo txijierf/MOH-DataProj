@@ -88,7 +88,8 @@
     "test:debug": "react-app-rewired --inspect-brk test --runInBand",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer build/static/js/*.js",
-    "webpack": "webpack-dev-server --config webpack.dev.js"
+    "webpack": "webpack-dev-server --config webpack.dev.js",
+    "webpack:build": "webpack --config webpack.prod.js"
   },
   "eslintConfig": {
     "extends": "react-app"
