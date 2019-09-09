@@ -3,7 +3,7 @@
 import nodeMailer from "nodemailer";
 import { mailServer, serverHostname } from "../config/config";
 
-const smtpTransport = nodeMailer.createTransport(config.mailServer);
+const smtpTransport = nodeMailer.createTransport(mailServer);
 
 const from = mailServer.sender;
 
