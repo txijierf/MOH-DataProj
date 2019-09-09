@@ -5,7 +5,7 @@
   "main": "./backend/app.js",
   "scripts": {
     "deps": "concurrently \"yarn --cwd backend\" \"yarn --cwd frontend\"",
-    "dev": "concurrently \"yarn --cwd backend start\" \"yarn --cwd frontend start\""
+    "dev": "concurrently \"yarn --cwd backend start\" \"yarn --cwd frontend webpack\""
   },
   "repository": {
     "type": "git",
