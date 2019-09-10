@@ -69,7 +69,7 @@ module.exports = function (grunt) {
 
         run: {
             report: {
-                exec: '"./node_modules/.bin/mocha" ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome'
+                exec: 'mocha ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome'
             },
             buildFrontend: {
                 exec: 'yarn run build:frontend'

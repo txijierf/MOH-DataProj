@@ -42,7 +42,7 @@
     "grunt-env": "^1.0.1",
     "grunt-run": "^0.8.1",
     "mocha": "^6.2.0",
-    "mochawesome": "^4.0.0"
+    "mochawesome": "^4.1.0"
   },
   "scripts": {
     "start": "cross-env NODE_ENV=development node app.js",

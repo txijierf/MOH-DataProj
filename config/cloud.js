@@ -1,8 +1,8 @@
 // config for pivotal cloud
 const pivotal = {
-    appName: 'mohltc', // your pivotal app name
-    serverUrl: 'https://mohltc.cfapps.io', // the route for this app
-    frontendUrl: 'https://mohltc.cfapps.io/react',
+    appName: 'alfredmohltc.cfapps.io', // your pivotal app name
+    serverUrl: 'https://alfredmohltc.cfapps.io.cfapps.io', // the route for this app
+    frontendUrl: 'https://alfredmohltc.cfapps.io.cfapps.io/react',
 };
 
 // config for amazon cloud
