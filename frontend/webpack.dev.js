@@ -1,5 +1,4 @@
 const common = require("./webpack.common");
-const path = require("path");
 const merge = require("webpack-merge");
 
 module.exports = merge(common, {
@@ -16,20 +15,13 @@ module.exports = merge(common, {
     rules: [
       {
         test: /\.css$/,
-        // include: path.join(__dirname, "/node_modules"),
         use: [
           "style-loader",
-          {
-            loader: "css-loader",
-            options: {
-              modules: false
-            }
-          }
+          "css-loader"
         ]
       },
       {
         test: /\.scss$/,
-        // include: path.join(__dirname, "/node_modules"),
         use: [
           "style-loader",
           "css-loader",

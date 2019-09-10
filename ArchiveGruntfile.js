@@ -1,4 +1,5 @@
-const {pivotal, aws} = require('./config/cloud');
+const pivotal = require('./config/pivotal');
+const aws = require("./config/aws");
 
 module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
@@ -69,7 +70,7 @@ module.exports = function (grunt) {
 
         run: {
             report: {
-                exec: '"./node_modules/.bin/mocha" ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome'
+                exec: 'mocha ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome'
             },
             buildFrontend: {
                 exec: 'yarn run build:frontend'
@@ -102,6 +103,7 @@ module.exports = function (grunt) {
         grunt.file.mkdir('build/zip/public/react');
     });
 
+    // registerTask(taskName, taskList)
     grunt.registerTask("build:aws", ["clean", "run:report", "env:aws", "run:buildFrontend", "mkdir", "copy:main", "compress"]);
 
     grunt.registerTask("pivotal:build", ["clean", "run:report", "env:pivotal", "run:buildFrontend", "mkdir", "copy:main"]);
