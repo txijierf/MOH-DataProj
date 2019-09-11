@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Component} from 'react';
 import {DropdownItem, DropdownMenu, DropdownToggle, Nav} from 'reactstrap';
 import PropTypes from 'prop-types';
 
@@ -14,54 +14,35 @@ const propTypes = {
 
 const defaultProps = {};
 
-const AccountMenu = ({ onLogout }) => (
-  <DropdownMenu right>
-    <DropdownItem header tag="div" className="text-center">
-      <strong>Account</strong>
-    </DropdownItem>
-    <DropdownItem onClick={onLogout}>
-      <i className="fa fa-lock"/>
-      Logout
-    </DropdownItem>
-  </DropdownMenu>
-);
-
-const AccountMenuToggle = () => (
-  <DropdownToggle nav>
-    <i className="mdi mdi-account mdi-36px"/>
-  </DropdownToggle>
-);
-
-const AccountMenuContainer = ({ onLogout }) => (
-  <AppHeaderDropdown direction="down">
-    <AccountMenuToggle/>
-    <AccountMenu onLogout={onLogout}/>
-  </AppHeaderDropdown>
-);
-
-const AccountMenuNav = ({ onLogout }) => (
-  <Nav className="ml-auto" navbar>
-    <AccountMenuContainer onLogout={onLogout}/>
-  </Nav>
-);
-
-const AppNavigation = ({ onLogout }) => (
-  <Toolbar style={{minHeight: 55}}>
-    <AppSidebarToggler className="d-lg-none" display="md" mobile/>
-    <AppNavbarBrand
-      full={{src: logo, height: 48, alt: 'MOH Logo'}}
-      minimized={{src: sygnet, height: 48, alt: 'MOH Logo'}}
-    />
-    <AppSidebarToggler className="d-md-down-none" display="lg"/>
-    <AccountMenuNav onLogout={onLogout}/>
-  </Toolbar>
-);
-
-const DefaultHeader = ({ onLogout }) => (
-  <AppBar style={{minHeight: 55}} color="default">
-    <AppNavigation onLogout={onLogout}/>
-  </AppBar>
-);
+class DefaultHeader extends Component {
+  render() {
+    return (
+      <React.Fragment>
+        <AppBar style={{minHeight: 55}} color="default">
+          <Toolbar style={{minHeight: 55}}>
+            <AppSidebarToggler className="d-lg-none" display="md" mobile/>
+            <AppNavbarBrand
+              full={{src: logo, height: 48, alt: 'MOH Logo'}}
+              minimized={{src: sygnet, height: 48, alt: 'MOH Logo'}}
+            />
+            <AppSidebarToggler className="d-md-down-none" display="lg"/>
+            <Nav className="ml-auto" navbar>
+              <AppHeaderDropdown direction="down">
+                <DropdownToggle nav>
+                  <i className="mdi mdi-account mdi-36px"/>
+                </DropdownToggle>
+                <DropdownMenu right>
+                  <DropdownItem header tag="div" className="text-center"><strong>Account</strong></DropdownItem>
+                  <DropdownItem onClick={e => this.props.onLogout(e)}><i className="fa fa-lock"/> Logout</DropdownItem>
+                </DropdownMenu>
+              </AppHeaderDropdown>
+            </Nav>
+          </Toolbar>
+        </AppBar>
+      </React.Fragment>
+    );
+  }
+}
 
 DefaultHeader.propTypes = propTypes;
 DefaultHeader.defaultProps = defaultProps;

@@ -16,6 +16,7 @@ import ExcelToolBarUser from './components/ExcelToolBarUser';
 import ExcelBottomBar from './components/ExcelBottomBar';
 import FormulaBar from "./components/FormulaBar";
 import SetIdDialog from "./components/SetIdDialog";
+import SetPermitDialog from "./components/SetPermitDialog";
 import Dropdown from './components/Dropdown';
 import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
@@ -31,6 +32,9 @@ class Excel extends Component {
     this.organizationName = this.props.match.params.organization;
     console.log('mode:', props.params.mode);
     // TODO: disable some cell editing for user (formula editing...)
+
+
+
     window.excel = this;
     this.state = {
       completed: 5,
@@ -40,6 +44,9 @@ class Excel extends Component {
       loaded: false,
       currentSheetIdx: 0,
       openSetId: null,
+      openSetPermit: null,
+      //
+
       openDropdown: null,
       openDataValidationDialog: false,
       openEditor: null,
@@ -62,6 +69,9 @@ class Excel extends Component {
     this.attOptions = [];
     this.catOptions = [];
 
+    //set permit dialog
+    this.permitOptions = [];
+
     // error dialog
     this.errorDialog = {};
 
@@ -70,6 +80,10 @@ class Excel extends Component {
       'Set ID': (anchorEl) => {
         console.log('SET ID');
         this.setId(anchorEl);
+      },
+      'Set User Permit': (anchorEl) => {
+        console.log('Set User Permit');
+        this.setPermission(anchorEl);
       },
       'div1': null,
       'Copy \t\t\t Ctrl+C': () => {
@@ -189,6 +203,17 @@ class Excel extends Component {
     return true;
   };
 
+  setPermit(sheetNo, row, col, permit) {
+    sheetNo = sheetNo == null ? this.currentSheetIdx : sheetNo;
+    const sheet = this.workbook.sheet(sheetNo);
+    const cell = sheet.getCell(row + 1, col + 1);
+    let updates;
+
+    updates = cell.setCellPermit(permit);
+    console.log(`Updated ${updates.length + 1} cells.`);
+    return true;
+  };
+
   /**
    * Save as setData() but calls renderCurrentSheet().
    * @param params
@@ -218,9 +243,15 @@ class Excel extends Component {
     this.setState({contextMenu: null, openSetId: anchorEl, setIdCell: cell});
   };
 
+  setPermission = (anchorEl) => {
+    const cell = this.selected;
+    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
+  }
+
   handleSetId = (att = {}, cat = {}) => {
     console.log(`Set ID`, att, cat);
     const cell = this.state.setIdCell;
+    const test = this.sheet.getCell();
     const attCell = this.sheet.getCell(1, cell.columnNumber());
     const catCell = this.sheet.getCell(cell.rowNumber(), 1);
     if (attCell.getValue() !== att.value || attCell.getFormula() != null
@@ -232,8 +263,25 @@ class Excel extends Component {
     this.setState({openSetId: null, setIdCell: null});
   };
 
+  handleSetPermit = (pmt = {}) => {
+    console.log(`Set Permit`, pmt);
+    const cell = this.state.setIdCell;
+    cell.setCellPermit(true);
+    const permitCell = cell.getCellPermit();
+    if(permitCell !== pmt) {
+      this.props.showMessage('Content is overridden.', "info");
+    }
+    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt || '');
+
+    this.setState({openSetPermit: null, setIdCell: null});
+  };
+
   handleCloseSetId = () => {
     this.setState({openSetId: null, setIdCell: null});
+  };
+
+  handleCloseSetPermit = () => {
+    this.setState({openSetPermit: null, setIdCell: null});
   };
 
   /**
@@ -422,6 +470,7 @@ class Excel extends Component {
       || this.state.loaded !== nextState.loaded
       || this.state.currentSheetIdx !== nextState.currentSheetIdx
       || this.state.openSetId !== nextState.openSetId
+      || this.state.openSetPermit !== nextState.openSetPermit
       || this.state.openDropdown !== nextState.openDropdown
       || this.state.fileName !== nextState.fileName
       || this.state.openDataValidationDialog !== nextState.openDataValidationDialog
@@ -491,6 +540,13 @@ class Excel extends Component {
             <Sheets ref={this.sheetRef} context={this} sheetIdx={this.currentSheetIdx}/>
             <ExcelBottomBar context={this}/>
           </Card>
+          <SetPermitDialog
+            anchorEl={this.state.openSetPermit}
+            cell={this.state.setIdCell}
+            permitOptions={this.permitOptions}
+            handleSetPermit={this.handleSetPermit}
+            handleClose={this.handleCloseSetPermit}
+          />
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}
@@ -499,6 +555,7 @@ class Excel extends Component {
             handleSetId={this.handleSetId}
             handleClose={this.handleCloseSetId}
           />
+
           {this.common()}
         </div>
       );

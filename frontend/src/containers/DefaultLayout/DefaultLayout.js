@@ -12,7 +12,7 @@ import {
   AppSidebarNav,
 } from '@coreui/react';
 // sidebar nav config
-import navigationData from '../../_nav';
+import navigation from '../../_nav';
 // routes config
 import routes from '../../routes';
 import {lastUrl, setLastUrl, isLoggedIn, logout} from "../../controller/userManager";
@@ -34,78 +34,8 @@ const styles = {
   }
 };
 
-const Logout = () => (
-  <Suspense fallback={<Loading/>}>
-    <DefaultHeader onLogout={() => logout()}/>
-  </Suspense>
-);
-
-const AccountMenu = () => (
-  <AppHeader fixed>
-    <Logout/>
-  </AppHeader>
-);
-
-const SideBarContent = (props) => (
-  <Suspense>
-    <AppSidebarNav navConfig={navigationData} {...props} />
-  </Suspense>
-);
-
-const SideBar = (props) => (
-  <AppSidebar fixed display="lg">
-    <AppSidebarHeader/>
-    <AppSidebarForm/>
-    <SideBarContent {...props}/>
-    <AppSidebarFooter/>
-    <AppSidebarMinimizer/>
-  </AppSidebar>
-);
-
-const AppRoutes = ({ showMessage }) => {
-  const Routes = routes.map((route, idx) => (
-    route.component && 
-      <Route key={idx} path={route.path} exact={route.exact} name={route.name}
-        render={props => <route.component showMessage={showMessage} params={route.params ? route.params : {}} {...props} />}
-      />
-  ));
-
-  return (
-    <Switch>
-      {Routes}
-      <Redirect from="/" to="/profile"/>
-    </Switch>
-  );
-};
-
-const RoutesLoader = ({ showMessage }) => (
-  <Suspense fallback={<Loading/>}>
-    <AppRoutes showMessage={showMessage}/>
-  </Suspense>
-);
-
-const RouteContent = ({ showMessage, props }) => (
-  <Container maxWidth="xl" className={props.classes.container}>
-    <RoutesLoader showMessage={showMessage}/>
-  </Container>
-);
-
-const AppContent = ({ showMessage, props }) => (
-  <div className={props.classes.main + ' main'}>
-    <AppBreadcrumb appRoutes={routes}/>
-    <RouteContent showMessage={showMessage} props={props}/>
-  </div>
-);
-
-const AppBody = ({ showMessage, props }) => (
-  <div className="app-body">
-    <SideBar {...props}/>
-    <AppContent showMessage={showMessage} props={props}/>
-  </div>
-);
-
-
 class DefaultLayout extends Component {
+
   constructor(props) {
     super(props);
     isLoggedIn()
@@ -176,31 +106,66 @@ class DefaultLayout extends Component {
   };
 
   render() {
+    const {classes} = this.props;
     if (this.state.hasError) {
 
     }
-
-    const anchorOrigin = {
-      vertical: 'bottom',
-      horizontal: 'left',
-    };
-
     return (
       <div className="app">
-        <AccountMenu/>
-        <AppBody showMessage={this.showMessage} props={this.props}/>
+        <AppHeader fixed>
+          <Suspense fallback={this.loading()}>
+            <DefaultHeader onLogout={() => logout()}/>
+          </Suspense>
+        </AppHeader>
+        <div className="app-body">
+          <AppSidebar fixed display="lg">
+            <AppSidebarHeader/>
+            <AppSidebarForm/>
+            <Suspense>
+              <AppSidebarNav navConfig={navigation} {...this.props} />
+            </Suspense>
+            <AppSidebarFooter/>
+            <AppSidebarMinimizer/>
+          </AppSidebar>
+          <div className={classes.main + ' main'}>
+            <AppBreadcrumb appRoutes={routes}/>
+            <Container maxWidth="xl" className={classes.container}>
+              <Suspense fallback={this.loading()}>
+                <Switch>
+                  {routes.map((route, idx) => {
+                    return route.component ? (
+                      <Route
+                        key={idx}
+                        path={route.path}
+                        exact={route.exact}
+                        name={route.name}
+                        render={props => (
+                          <route.component showMessage={this.showMessage}
+                                           params={route.params ? route.params : {}} {...props} />
+                        )}/>
+                    ) : null;
+                  })}
+                  <Redirect from="/" to="/profile"/>
+                </Switch>
+              </Suspense>
+            </Container>
+          </div>
+        </div>
         <Snackbar
-          anchorOrigin={anchorOrigin}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
           open={this.state.openSnackbar}
           autoHideDuration={6000}
           onClose={this.handleCloseSnackbar}
           onExited={this.handleExitedSnackbar}
         >
-        <CustomSnackbarContent
-          onClose={this.handleCloseSnackbar}
-          variant={this.state.messageInfo.variant}
-          message={this.state.messageInfo.message}
-        />
+          <CustomSnackbarContent
+            onClose={this.handleCloseSnackbar}
+            variant={this.state.messageInfo.variant}
+            message={this.state.messageInfo.message}
+          />
         </Snackbar>
       </div>
     );
