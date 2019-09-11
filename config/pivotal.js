@@ -1,5 +1,5 @@
 module.exports = {
-  appName: "mohltc", 
-  SERVER_URL:"https://mohltc.cfapps.io", 
-  PUBLIC_URL:"https://mohltc.cfapps.io/react"
+  appName: "alfredmohltcwebpack", 
+  SERVER_URL:"https://alfredmohltcwebpack.cfapps.io", 
+  PUBLIC_URL:"https://alfredmohltcwebpack.cfapps.io/react"
 };

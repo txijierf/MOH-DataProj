@@ -16,6 +16,7 @@ module.exports = function(grunt) {
   };
 
   const frontendFilesConfig = {
+    expand: true,
     cwd: "./frontend/dist",
     src: [ "**" ],
     dest: "dist/zip/public/react"
@@ -35,8 +36,18 @@ module.exports = function(grunt) {
         files: [ backendFilesConfig, awsFilesConfig, frontendFilesConfig ]
       }
     },
-    compress: {},
-    clean: [],
+    compress: {
+      main: {
+        options: {
+          archive: 'release-beta.zip'
+        },
+        expand: true,
+        cwd: 'dist/zip',
+        src: ['**/*', '.*/*'],
+        dest: './',
+      }
+    },
+    clean: ["dist", "release-beta.zip"],
     run: {
       report: {
         exec: "mocha ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome"
@@ -45,9 +56,23 @@ module.exports = function(grunt) {
         exec: "yarn run frontend:build"
       },
       pivotal: {
-        exec: `cd ./build/zip && cf push ${pivotal.appName} -c "node -r esm app.js"`
+        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "yarn --cwd backend start"`
       }
     },
     env: { aws, pivotal }
   });
+
+  // mkdir for zip archive
+  grunt.registerTask("mkdir", function () {
+    grunt.file.mkdir('dist/zip/temp');
+    grunt.file.mkdir('dist/zip/uploads');
+    grunt.file.mkdir('dist/zip/public/react');
+  });
+
+  // registerTask(taskName, taskList)
+  grunt.registerTask("build:aws", ["clean", "run:report", "env:aws", "run:buildFrontend", "mkdir", "copy:main", "compress"]);
+
+  grunt.registerTask("pivotal:build", ["clean", "env:pivotal", "run:buildFrontend", "mkdir", "copy:main"]);
+  grunt.registerTask("pivotal:publish", ["run:pivotal"]);
+  grunt.registerTask("build:pivotal", ["pivotal:build", "pivotal:publish"]);
 };
