@@ -81,7 +81,7 @@ module.exports = function(grunt) {
         exec: "yarn run frontend:build"
       },
       pivotal: {
-        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "yarn --cwd backend start" -b nodejs_buildpack`
+        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "node index.js"`
       }
     },
     env: { aws, pivotal }

@@ -16,6 +16,7 @@ module.exports = merge(common, {
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: "static",
+      openAnalyzer: false,
       defaultSizes: "parsed",
       reportFilename: "webpack-report.html"
     })
