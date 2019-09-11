@@ -2,8 +2,9 @@
   "name": "mohltc-dataproject",
   "version": "1.0.0",
   "description": "",
-  "main": "./backend/app.js",
+  "main": "./backend/index.js",
   "scripts": {
+    "backend:run": "yarn --cwd backend start", 
     "frontend:build": "yarn --cwd frontend webpack:build",
     "deps": "concurrently \"yarn --cwd backend\" \"yarn --cwd frontend\"",
     "dev": "concurrently \"yarn --cwd backend start\" \"yarn --cwd frontend webpack\""

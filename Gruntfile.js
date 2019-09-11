@@ -11,7 +11,8 @@ module.exports = function(grunt) {
   const backendFilesConfig = {
     expand: true,
     cwd: "./backend",
-    src: [ "public/**", "controller/**", "models/**", "routes/**", "app.js", "package.json", "yarn.lock" ],
+    src: [ "**" ],
+    // src: [ "public/**", "controller/**", "config/**", ""models/**", "routes/**", "index.js", "app.js", "package.json", "yarn.lock" ],
     dest: "dist/zip"
   };
 
@@ -22,18 +23,42 @@ module.exports = function(grunt) {
     dest: "dist/zip/public/react"
   };
 
-  const awsFilesConfig = {
+  const projectConfig = {
     expand: true,
-    src: [ ".ebextensions/**", "config/aws" ],
+    cwd: "./Data-Project-Config",
+    src: [
+      "**"
+      // ".ebextensions/**",
+      // "config/**"
+    ],
     dest: "dist/zip"
   };
+
+  // const awsFilesConfig = {
+  //   expand: true,
+  //   src: [ ".ebextensions/**", "config/aws" ],
+  //   dest: "dist/zip"
+  // };
 
   grunt.initConfig({
     // Allows references to properties/scripts in package.json
     pkg: grunt.file.readJSON("package.json"),
     copy: {
       main: {
-        files: [ backendFilesConfig, awsFilesConfig, frontendFilesConfig ]
+        expand: true,
+        files: [ projectConfig, backendFilesConfig, /* awsFilesConfig, */ frontendFilesConfig ]
+      },
+      projectConfig: {
+        expand: true,
+        files: [ projectConfig ]
+      },
+      backendFilesConfig: {
+        expand: true,
+        files: [ backendFilesConfig ]
+      },
+      frontEndFilesConfig: {
+        expand: true,
+        files: [ frontendFilesConfig ]
       }
     },
     compress: {
@@ -56,7 +81,7 @@ module.exports = function(grunt) {
         exec: "yarn run frontend:build"
       },
       pivotal: {
-        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "yarn --cwd backend start"`
+        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "yarn --cwd backend start" -b nodejs_buildpack`
       }
     },
     env: { aws, pivotal }
@@ -75,4 +100,5 @@ module.exports = function(grunt) {
   grunt.registerTask("pivotal:build", ["clean", "env:pivotal", "run:buildFrontend", "mkdir", "copy:main"]);
   grunt.registerTask("pivotal:publish", ["run:pivotal"]);
   grunt.registerTask("build:pivotal", ["pivotal:build", "pivotal:publish"]);
+  grunt.registerTask("copyProjectConfig", ["copy:projectConfig"]);
 };
