@@ -39,6 +39,7 @@
     "react-window": "https://github.com/greylemon/react-window",
     "reactstrap": "^8.0.1",
     "tinycolor2": "^1.4.1",
+    "uniqid": "^5.0.3",
     "workerpool": "https://github.com/josdejong/workerpool.git",
     "xlsx-populate": "https://github.com/greylemon/xlsx-populate"
   },

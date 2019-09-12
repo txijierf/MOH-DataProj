@@ -47,18 +47,6 @@ module.exports = function(grunt) {
       main: {
         expand: true,
         files: [ projectConfig, backendFilesConfig, /* awsFilesConfig, */ frontendFilesConfig ]
-      },
-      projectConfig: {
-        expand: true,
-        files: [ projectConfig ]
-      },
-      backendFilesConfig: {
-        expand: true,
-        files: [ backendFilesConfig ]
-      },
-      frontEndFilesConfig: {
-        expand: true,
-        files: [ frontendFilesConfig ]
       }
     },
     compress: {
@@ -100,5 +88,4 @@ module.exports = function(grunt) {
   grunt.registerTask("pivotal:build", ["clean", "env:pivotal", "run:buildFrontend", "mkdir", "copy:main"]);
   grunt.registerTask("pivotal:publish", ["run:pivotal"]);
   grunt.registerTask("build:pivotal", ["pivotal:build", "pivotal:publish"]);
-  grunt.registerTask("copyProjectConfig", ["copy:projectConfig"]);
 };
