@@ -20,7 +20,8 @@ import Dropdown from './components/Dropdown';
 import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
 import Loading from "../components/Loading";
-import RightClickMenu from "./components/RightClickMenu";
+import CustomContextMenu from "./components/CustomContextMenu";
+
 
 class Excel extends Component {
 
@@ -65,24 +66,25 @@ class Excel extends Component {
     // error dialog
     this.errorDialog = {};
 
-    // right click menu
-    this.menu = {
-      'Set ID': (anchorEl) => {
-        console.log('SET ID');
-        this.setId(anchorEl);
-      },
-      'div1': null,
-      'Copy \t\t\t Ctrl+C': () => {
-        this.setState({contextMenu: null})
-      },
-      'Paste \t\t\t Ctrl+V': async () => {
-        const result = await navigator.permissions.query({name: "clipboard-read"});
-        console.log('clipboard ' + result.state);
 
-        // console.log(await navigator.clipboard.read())
-        this.setState({contextMenu: null})
-      },
+    const handleClickSetID = (anchorEl) => this.setId(anchorEl);
+    const handleClickCopy = () => this.setState({ contextMenu: null });
+    const handleClickPaste = async () => {
+      const result = await navigator.permissions.query({name: "clipboard-read"});
+      console.log('clipboard ' + result.state);
+
+      // console.log(await navigator.clipboard.read())
+      this.setState({contextMenu: null})
     };
+
+    const setIDMenuItem = { description: "Set ID", command: null, handleClick: handleClickSetID };
+    const copyMenuitem = { description: "Copy", command: "Ctrl+C", handleClick: handleClickCopy };
+    const pasteMenuItem = { description: "Paste", command: "Ctrl+V", handleClick: handleClickPaste };
+
+    const contextMenuGroups = [ [ setIDMenuItem ], [ copyMenuitem, pasteMenuItem ] ];
+
+    // Right click menu
+    this.menu = contextMenuGroups;
 
     // request permission
 
@@ -437,7 +439,14 @@ class Excel extends Component {
     init(undefined);
   }
 
+
+
   common() {
+    const handleClose = () => this.setState({ contextMenu:null });
+    const handleMouseDown = (event) => {
+      if (event.button === 2 || event.button === 1) handleClose();
+    };
+
     return (
       <>
         <Dropdown
@@ -460,11 +469,7 @@ class Excel extends Component {
           handleRetry={this.handleRetryDataValidationDialog}
           handleClose={this.handleCloseDataValidationDialog}
         />
-        <RightClickMenu
-          handleClose={() => this.setState({contextMenu: null})}
-          config={this.state.contextMenu}
-          items={this.menu}
-        />
+        <CustomContextMenu groupMenuItems={this.menu} isOpen={this.state.contextMenu !== null} config={this.state.contextMenu} handleClose={handleClose} handleMouseDown={handleMouseDown}/>
       </>
     )
   }
