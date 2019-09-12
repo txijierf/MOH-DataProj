@@ -22,6 +22,7 @@ import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
 import Loading from "../components/Loading";
 import RightClickMenu from "./components/RightClickMenu";
+// import Cell from "..../node_modules/xlsx-populate/lib/worksheets/Cell"
 
 class Excel extends Component {
 
@@ -49,6 +50,7 @@ class Excel extends Component {
 
       openDropdown: null,
       openDataValidationDialog: false,
+      excelChanged: false,
       openEditor: null,
       dropdownCell: null,
       setIdCell: null,
@@ -86,6 +88,17 @@ class Excel extends Component {
         this.setPermission(anchorEl);
       },
       'div1': null,
+      'Add New Attribute': () => {
+        console.log('Add New Attribute');
+        this.addAttribute();
+        this.setState({contextMenu: null})
+      },
+      'Add New Category': () => {
+        console.log('Add New Category');
+        this.addCategory();
+        this.setState({contextMenu: null})
+      },
+      'div2': null,
       'Copy \t\t\t Ctrl+C': () => {
         this.setState({contextMenu: null})
       },
@@ -239,19 +252,21 @@ class Excel extends Component {
   };
 
   setId = (anchorEl) => {
-    const cell = this.selected;
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
     this.setState({contextMenu: null, openSetId: anchorEl, setIdCell: cell});
   };
 
   setPermission = (anchorEl) => {
-    const cell = this.selected;
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    console.log('selected', cell);
     this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
   }
 
   handleSetId = (att = {}, cat = {}) => {
     console.log(`Set ID`, att, cat);
     const cell = this.state.setIdCell;
-    const test = this.sheet.getCell();
+    console.log(cell);
+
     const attCell = this.sheet.getCell(1, cell.columnNumber());
     const catCell = this.sheet.getCell(cell.rowNumber(), 1);
     if (attCell.getValue() !== att.value || attCell.getFormula() != null
@@ -518,6 +533,16 @@ class Excel extends Component {
     )
   }
 
+  addAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+
+  }
+
+  addCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.addRow(cell.rowNumber());
+  }
+
   render() {
     console.log('render create excel');
     const height = this.mode === 'user' ? 'calc(100vh - 55px - 45.8px - 50px - 100px)'
@@ -530,6 +555,7 @@ class Excel extends Component {
         </div>
       );
     } else if (this.mode === 'admin create' || this.mode === 'admin edit') {
+      console.log("admin workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>
@@ -560,6 +586,7 @@ class Excel extends Component {
         </div>
       );
     } else if (this.mode === 'user') {
+      console.log("user workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>
@@ -571,6 +598,7 @@ class Excel extends Component {
           {this.common()}
         </div>)
     } else {
+      console.log("other workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>
