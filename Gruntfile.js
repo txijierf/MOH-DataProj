@@ -13,14 +13,14 @@ module.exports = function(grunt) {
     cwd: "./backend",
     src: [ "**" ],
     // src: [ "public/**", "controller/**", "config/**", ""models/**", "routes/**", "index.js", "app.js", "package.json", "yarn.lock" ],
-    dest: "dist/zip"
+    dest: "build/zip"
   };
 
   const frontendFilesConfig = {
     expand: true,
     cwd: "./frontend/dist",
     src: [ "**" ],
-    dest: "dist/zip/public/react"
+    dest: "build/zip/public/react"
   };
 
   const projectConfig = {
@@ -31,7 +31,7 @@ module.exports = function(grunt) {
       // ".ebextensions/**",
       // "config/**"
     ],
-    dest: "dist/zip"
+    dest: "build/zip"
   };
 
   // const awsFilesConfig = {
@@ -60,7 +60,7 @@ module.exports = function(grunt) {
         dest: './',
       }
     },
-    clean: ["dist", "release-beta.zip"],
+    clean: ["build", "release-beta.zip"],
     run: {
       report: {
         exec: "mocha ./test/main.js ./test/ --recursive --exit --check-leaks -R mochawesome"
@@ -69,7 +69,7 @@ module.exports = function(grunt) {
         exec: "yarn run frontend:build"
       },
       pivotal: {
-        exec: `cd ./dist/zip && cf push ${pivotal.appName} -c "node index.js"`
+        exec: `cd ./build/zip && cf push ${pivotal.appName} -b "nodejs_buildpack" -c "node index.js"`
       }
     },
     env: { aws, pivotal }
@@ -77,9 +77,9 @@ module.exports = function(grunt) {
 
   // mkdir for zip archive
   grunt.registerTask("mkdir", function () {
-    grunt.file.mkdir('dist/zip/temp');
-    grunt.file.mkdir('dist/zip/uploads');
-    grunt.file.mkdir('dist/zip/public/react');
+    grunt.file.mkdir('build/zip/temp');
+    grunt.file.mkdir('build/zip/uploads');
+    grunt.file.mkdir('build/zip/public/react');
   });
 
   // registerTask(taskName, taskList)

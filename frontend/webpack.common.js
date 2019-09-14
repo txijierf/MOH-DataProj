@@ -10,15 +10,6 @@ module.exports = {
     publicPath: "/"
   },
   resolve: {
-    // alias: {
-    //   constants: path.join(__dirname, "/src/constants"),
-    //   images: path.join(__dirname, "/src/images"),
-    //   tools: path.join(__dirname, "/src/tools"),
-    //   store: path.join(__dirname, "/src/store"),
-    //   actions: path.join(__dirname, "/src/store/actions"),
-    //   actionCreators: path.join(__dirname, "/src/store/actions/actionCreators"),
-    //   styles: path.join(__dirname, "/src/styles")
-    // },
     extensions: ["*", ".js", ".jsx"]
   },
   module: {
