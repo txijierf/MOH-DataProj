@@ -1,11 +1,13 @@
 import React, {Suspense} from 'react';
 import {HashRouter, Route, Switch} from 'react-router-dom';
 import Loading from './views/components/Loading';
-import './App.scss';
 
 import {createMuiTheme} from "@material-ui/core/styles";
 import {ThemeProvider} from "@material-ui/styles";
 import {blue} from '@material-ui/core/colors';
+
+import './App.scss';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const theme = createMuiTheme({
   palette: {

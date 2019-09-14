@@ -4,6 +4,8 @@ import { Dropdown, DropdownMenu, DropdownToggle, DropdownItem } from 'reactstrap
 
 import uniqid from "uniqid";
 
+import "./WindowMenu.scss";
+
 const WindowMenuItem = ({ label, command, divider, handleClick }) => (
   <DropdownItem className="d-flex justify-content-between" divider={divider} onClick={handleClick}>
     <p className="mb-0">{label}</p>
@@ -22,10 +24,10 @@ const WindowMenu = ({ activeOption, label, groupMenuItems, handleToggle, handleM
   ));
 
   return (
-    <Dropdown isOpen={isOpen} toggle={handleOptionToggle} onMouseEnter={handleOptionMouseEnter}>
-      <DropdownToggle>{label}</DropdownToggle>
+    <Dropdown className="windowMenu" isOpen={isOpen} toggle={handleOptionToggle} onMouseEnter={handleOptionMouseEnter}>
+      <DropdownToggle className="windowMenu__toggle" color="light">{label}</DropdownToggle>
       <DropdownMenu>
-        <DropdownItem>Foo Action</DropdownItem>
+        <DropdownItem>Foo Adction</DropdownItem>
         <DropdownItem>Bar Action</DropdownItem>
         <DropdownItem>Quo Action</DropdownItem>
         {WindowMenuItems}
