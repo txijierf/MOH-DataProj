@@ -65,7 +65,7 @@ const ExcelAppBar = ({ classes: { inputStyle, iconStyle, buttonStyle }, title, h
 
 
   return (
-    <AppBar className="d-flex flex-row" position="static" color="default">
+    <AppBar className="d-flex flex-row" position="relative" color="default">
       <FileTableOutline className={iconStyle}/>
       <WorkBookHeader inputStyle={inputStyle} buttonStyle={buttonStyle} title={title} handleTitleChange={handleTitleChange}/>
     </AppBar>

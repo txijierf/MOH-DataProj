@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+
+
 import AppBar from "./components/AppBar";
 import ToolBar from "./components/ToolBar";
 import Sheet from "./components/Sheet";
@@ -13,11 +15,11 @@ const Excel = () => {
   const handleTitleChange = (event) => setTitle(event.target.value);
 
   return (
-    <div className="animated fadeIn">
+    <div className="animated fadeIn w-100 h-100">
       <AppBar title={title} handleTitleChange={handleTitleChange}/>
       <ToolBar/>
       <Sheet/>
-      <BottomBar/>
+      {/* <BottomBar/> */}
     </div>
   );
 };
