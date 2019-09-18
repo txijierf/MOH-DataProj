@@ -1,17 +1,16 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 
 /**
- * TODO: Allow input after tab/enter 
+ * TODO: Allow input after tab and key press 
+ * TODO: Prevent text selection while allowing key press
  * TODO: Allow selection and selection scope copy 
  */
-const Cell = ({ columnIndex, rowIndex, style, data: { excelManager }}) => {
+const Cell = ({ columnIndex, rowIndex, style, data: { onMouseDown, onMouseOver, onMouseUp, onDoubleClick }}) => {
   const [ contentEditable, setContentEditable ] = useState(false);
   const [ editMode, setEditMode ] = useState(false);
-  const inputRef = useRef(null);
   
   // const handleMouseUp = ({ button }) => onMouseUp(rowIndex, columnIndex, button);
   const handleClick = (event) => {
-    event.preventDefault();
     if(contentEditable) {
       if(!editMode) setEditMode(true);
     } else {
@@ -21,9 +20,13 @@ const Cell = ({ columnIndex, rowIndex, style, data: { excelManager }}) => {
 
   const handleBlur = () => {
     // Submit content
-    if(contentEditable) setContentEditable(false);
+    if(contentEditable) {
+      setContentEditable(false); 
+    }
 
-    if(editMode) setEditMode(false);
+    if(editMode) {
+      setEditMode(false);
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -31,26 +34,36 @@ const Cell = ({ columnIndex, rowIndex, style, data: { excelManager }}) => {
       event.preventDefault();
 
       setEditMode(!editMode);
-    }
+
+      if(!contentEditable) setContentEditable(true);
+    } 
   };
 
-  const handleMouseDown = () => {
+  const handleDragEnter = () => {
     if(contentEditable) {
       if(!editMode) setEditMode(true);
     }
   };
 
+  const handleFocus = () => {
+    if(editMode) {
+      if(!contentEditable) setContentEditable(true);
+    }
+  };
+
   const className = `cell ${editMode ? "cell__editable" : "cell__uneditable"}`;
+
+  console.log("edit mode", editMode, "contenteditab", contentEditable);
 
   return (
     <div 
       className={className} 
       style={style} 
-      ref={inputRef}
       tabIndex="0" 
       suppressContentEditableWarning 
       contentEditable={contentEditable} 
-      onMouseDown={handleMouseDown}
+      onDragEnter={handleDragEnter}
+      onFocus={handleFocus}
       onKeyDown={handleKeyDown} 
       onClick={handleClick}
       onBlur={handleBlur}

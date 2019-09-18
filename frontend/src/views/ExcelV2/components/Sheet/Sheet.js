@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { VariableSizeGrid } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -17,27 +17,7 @@ const rowHeights = new Array(50)
   .map(() => 24);
 
 const Sheet = ({ excelManager }) => {
-  // Anchor/inital point for selection
-  const onMouseDown = (rowIndex, columnIndex, button) => {
-    console.log(rowIndex, columnIndex, button)
-  };
-
-  // Selection drag
-  const onMouseOver = (rowIndex, columnIndex, button) => {
-    
-  };
-
-  // Selection release
-  const onMouseUp = (rowIndex, columnIndex) => {
-
-  };
-
-  // Editor trigger
-  const onDoubleClick = (rowIndex, colcolumnIndexIdx) => {
-
-  };
-
-  const itemData = { excelManager, onMouseDown, onMouseOver, onMouseUp, onDoubleClick };
+  const itemData = { excelManager };
 
   return (
     <AutoSizer className="sheet">
