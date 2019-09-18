@@ -9,12 +9,31 @@
   line-height: normal;
   text-align: left;
   white-space: pre;
-  overflow: visible;
+  overflow: hidden;
 
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
+
+  // Unable to double click and input text immediately after with these... these are needed to prevent select though so research more.
+  // user-select: none; /* supported by Chrome and Opera */
+  // -webkit-user-select: none; /* Safari */
+  // -khtml-user-select: none; /* Konqueror HTML */
+  // -moz-user-select: none; /* Firefox */
+  // -ms-user-select: none; /* Internet Explorer/Edge */
+
+  &:focus {
+    z-index: 1;
+    min-width: fit-content;
+    background-color: white;
+  }
+
+  &__editable {
+    -webkit-box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+    -moz-box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+    box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+  }
+
+  &__uneditable {
+    &:hover {
+      cursor: default;
+    }
+  }
 }

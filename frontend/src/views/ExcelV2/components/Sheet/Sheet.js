@@ -9,14 +9,14 @@ import "./Sheet.scss";
 
 // These item sizes are arbitrary.
 // Yours should be based on the content of the item.
-const columnWidths = new Array(1000)
+const columnWidths = new Array(50)
   .fill(true)
   .map(() => 75 + Math.round(Math.random() * 50));
-const rowHeights = new Array(1000)
+const rowHeights = new Array(50)
   .fill(true)
   .map(() => 24);
 
-const Sheet = () => {
+const Sheet = ({ excelManager }) => {
   // Anchor/inital point for selection
   const onMouseDown = (rowIndex, columnIndex, button) => {
     console.log(rowIndex, columnIndex, button)
@@ -37,7 +37,7 @@ const Sheet = () => {
 
   };
 
-  const itemData = { onMouseDown, onMouseOver, onMouseUp, onDoubleClick };
+  const itemData = { excelManager, onMouseDown, onMouseOver, onMouseUp, onDoubleClick };
 
   return (
     <AutoSizer className="sheet">
@@ -45,9 +45,9 @@ const Sheet = () => {
         <VariableSizeGrid
           height={height}
           width={width}
-          columnCount={1000}
+          columnCount={50}
           columnWidth={index => columnWidths[index]}
-          rowCount={1000}
+          rowCount={50}
           rowHeight={index => rowHeights[index]}
           itemData={itemData}
           freezeRowCount={1}
