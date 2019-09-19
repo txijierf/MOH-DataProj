@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import AppBar from "./components/AppBar";
 import ToolBar from "./components/ToolBar";
 import Sheet from "./components/Sheet";
-import BottomBar from "./components/BottomBar";
+// import BottomBar from "./components/BottomBar";
 
 import ExcelManager from "../../controller/excelManager";
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import PropTypes from "prop-types";
 
-import { AppBar, InputBase, Button, withStyles } from "@material-ui/core";
+import { AppBar, InputBase, withStyles } from "@material-ui/core";
 
 import { FileTableOutline } from "mdi-material-ui"; 
 
