@@ -17,7 +17,9 @@ const rowHeights = new Array(50)
   .map(() => 24);
 
 const Sheet = ({ excelManager }) => {
-  const itemData = { excelManager };
+  const [ activeCell, setActiveCell ] = useState({ columnIndex: 1, rowIndex: 1 });
+
+  const itemData = { excelManager, activeCell, setActiveCell };
 
   return (
     <AutoSizer className="sheet">
