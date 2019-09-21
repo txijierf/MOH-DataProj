@@ -28,6 +28,21 @@ const packageSchema = new mongoose.Schema({
 
     // Admins may provide some files, this does not include excel workbooks.
     adminFiles: [{buffer: Buffer, name: String}],
+
+    // Approver and reviewer
+    reviewers: [{
+        name: String,
+        username: String,
+        status: String,
+        reason: String
+    }],
+
+    approvers: [{
+        name:String,
+        username: String,
+        status: String,
+        reason: String
+    }]
 });
 
 module.exports = mongoose.model('Package', packageSchema);
