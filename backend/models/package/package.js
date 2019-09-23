@@ -19,27 +19,30 @@ const packageSchema = new mongoose.Schema({
     // reference to Workbook._id
     workbooks: [{type: ObjectId, ref: 'Workbook'}],
 
-    startDate: Date,
-
-    endDate: Date,
-
     // description for the workbook
     adminNotes: String,
 
     // Admins may provide some files, this does not include excel workbooks.
     adminFiles: [{buffer: Buffer, name: String}],
 
+    editStartDate: Date, 
+    editEndDate: Date, 
+    reviewStartDate: Date, 
+    reviewEndDate: Date, 
+    approvalStartDate: Date, 
+    approvalEndDate: Date,
+
+    editors: [{type: ObjectId, ref: 'User'}],
+
     // Approver and reviewer
     reviewers: [{
-        name: String,
-        username: String,
+        user: {type: ObjectId, ref: 'User'},
         status: String,
         reason: String
     }],
 
     approvers: [{
-        name:String,
-        username: String,
+        user: {type: ObjectId, ref: 'User'},
         status: String,
         reason: String
     }]
