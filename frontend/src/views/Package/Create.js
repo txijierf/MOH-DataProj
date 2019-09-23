@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import {TextField, Paper, Grid, Button, FormControlLabel, Checkbox} from '@material-ui/core';
 import DateFnsUtils from '@date-io/date-fns';
@@ -20,16 +20,28 @@ const useStyles = makeStyles(theme => ({
     paddingRight: theme.spacing(4),
   },
   textField: {
-    // marginLeft: theme.spacing(1),
-    // marginRight: theme.spacing(1),
     width: 400,
   },
 
 }));
 
+const fetchData = async (values, setValue) => {
+  try {
+    const workbooksData = await getAllWorkbooksForAdmin();
+    const workbooks = workbooksData.map(({ _id, name }) => ([ _id, name ]));
+
+    const organizationTypesData = await getOrganizationTypes();
+    const orgTypes = organizationTypesData.map(({ _id, name }) => ([ _id, name ]));
+
+    setValue({ ...values, workbooks, orgTypes, originalTypes: orgTypes, dataFetched: true });
+  } catch(error) {
+    console.log(error);
+  }
+};
+
 export default function CreatePackage(props) {
   const classes = useStyles();
-  const [values, setValues] = React.useState({
+  const [values, setValues] = useState({
     name: '',
     adminNotes: '',
     startDate: Date.now(),
@@ -37,25 +49,17 @@ export default function CreatePackage(props) {
     workbooks: null,
     orgTypes: null,
     originalTypes: null,
+    reviewers: [],
+    approvers: [],
     selectedWorkbooks: [],
     selectedOrgTypes: [],
     published: false,
+    dataFetched: false
   });
 
   useEffect(() => {
-    getAllWorkbooksForAdmin()
-      .then(data => {
-        const workbooks = [];
-        data.forEach(workbook => workbooks.push([workbook._id, workbook.name]));
-        setValues(values => ({...values, workbooks}))
-      });
-    getOrganizationTypes()
-      .then(data => {
-        const types = [];
-        data.forEach(type => types.push([type._id, type.name]));
-        setValues(values => ({...values, orgTypes: types, originalTypes: data}))
-      });
-  }, []);
+    if(!values.dataFetched) fetchData(values, setValues);
+  });
 
   const handleChange = useCallback((name, value) => {
     setValues(values => ({...values, [name]: value}));
@@ -123,10 +127,10 @@ export default function CreatePackage(props) {
 
   const renderDropdown = useMemo(() => (
     <>
-      <Dropdown title="Organization Types" options={values.orgTypes}
-                onChange={data => handleChange('selectedOrgTypes', data)}/>
-      <Dropdown title="Workbooks" options={values.workbooks}
-                onChange={data => handleChange('selectedWorkbooks', data)}/>
+      <Dropdown title="Reviewers" options={values.reviewers} onChange={(data) => handleChange("reviewers", data)}/>
+      <Dropdown title="Approvers" options={values.approvers} onChange={(data) => handleChange("approvers", data)}/>
+      <Dropdown title="Organization Types" options={values.orgTypes} onChange={data => handleChange('selectedOrgTypes', data)}/>
+      <Dropdown title="Workbooks" options={values.workbooks} onChange={data => handleChange('selectedWorkbooks', data)}/>
     </>
   ), [values.orgTypes, values.workbooks, handleChange]);
 
