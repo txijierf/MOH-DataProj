@@ -45,7 +45,7 @@ const _setupMongoose = async (options) => {
       console.log("MongoDB: Setting up database");
 
       const databaseEnv = process.env.NODE_ENV === 'test' ? DATABASE_NAME_TEST : DATABASE_NAME;
-      await mongoose.connect(databaseEnv, { useNewUrlParser: true, useFindAndModify: false, useCreateIndex: true, });
+      await mongoose.connect(databaseEnv, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true, useCreateIndex: true, });
 
       // Options
       if(wipeDatabase) await _wipeDatabase();
@@ -60,6 +60,14 @@ const _setupMongoose = async (options) => {
 
   await _init(options);
 };
+
+// PERMISSIONS
+// 'CRUD-workbook-template',
+// 'create-delete-attribute-category',
+// 'user-management',
+// 'system-management',
+// 'workbook-query',
+// 'package-management'
 
 export const setupDatabases = async (options) => {
   try {
