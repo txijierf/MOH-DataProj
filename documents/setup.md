@@ -21,6 +21,13 @@ Set up proxy in MOHLTC network. Our internet has huge restrictions and not stabl
     ```
     git config --global http.proxy http://204.40.130.129:3128
     ```
+    
+    If you have no permission, go to the repository and use the command:
+    
+    ```
+    git config --local http.proxy http://204.40.130.129:3128
+    ```
+    
  - Setup Webstorm proxy (if uses Webstorm, also applicable for other application blocked by the firewall):
     ```server: http://204.40.130.129, port: 3128```
 
