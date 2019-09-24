@@ -12,16 +12,8 @@ import {check, axiosConfig} from "./common";
  * @param published
  * @return {Promise}
  */
-export async function createPackage({name, orgIds, workbookIds, startDate, endDate, adminNotes, published}) {
-  const response = await axios.post(config.server + '/api/v2/admin/packages', {
-    name,
-    orgIds,
-    workbookIds,
-    startDate,
-    endDate,
-    adminNotes,
-    published
-  }, axiosConfig);
+export async function createPackage(packageData) {
+  const response = await axios.post(config.server + '/api/v2/admin/packages', packageData, axiosConfig);
   if (check(response)) {
     return response.data;
   }

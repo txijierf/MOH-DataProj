@@ -160,21 +160,15 @@ module.exports = {
         }
     },
 
+    // TODO: Check if title exists!!
+    // TODO: Do time bound error checking on workflow times
+    // TODO: Add headers
     adminCreatePackage: async (req, res, next) => {
         if (!checkPermission(req, Permission.PACKAGE_MANAGEMENT)) {
             return next(error.api.NO_PERMISSION);
         }
         const groupNumber = req.session.user.groupNumber;
-        const {
-            name, published = false, orgIds = [], workbookIds = [], startDate, endDate, adminNotes = '',
-            adminFiles
-        } = req.body;
-        if (!startDate || !endDate) {
-            return next({status: 400, message: 'startDate and endDate can not be empty.'});
-        }
-        if (startDate > endDate) {
-            return next({status: 400, message: 'startDate must be less or equal to endDate.'});
-        }
+        const { name, published = false, orgIds = [], workbookIds = [], adminNotes = '', adminFiles, editors, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate } = req.body;
         if (!name) {
             return next({status: 400, message: 'package must have a name.'});
         }
@@ -224,6 +218,8 @@ module.exports = {
                         if (atts[attId] == null) atts[attId] = attsInWorkbook[attId];
                     }
                 }
+
+                // TODO: Add reviewers/approvers to package value? unsure
                 // create PackageValue
                 const packageValue = new PackageValue({groupNumber, package: packageId, organization, values});
                 await packageValue.save();
@@ -237,13 +233,17 @@ module.exports = {
                 await packageValue.save();
             }
 
-            const newPackage = new Package({
-                name, published, organizations, workbooks, startDate, endDate, adminNotes, adminFiles,
-                groupNumber, _id: packageId
-            });
+            let { reviewers, approvers } = req.body;
+
+            reviewers = reviewers.map((user) => ({ user, status: "TBD", reason: "" }));
+
+            approvers = approvers.map((user) => ({ user, status: "TBD", reason: "" }));
+
+            const newPackage = new Package({ name, published, organizations, workbooks, adminNotes, adminFiles, groupNumber, _id: packageId, reviewers, approvers, editors, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate });
             await newPackage.save();
             return res.json({success: true, message: `package (${name}) saved.`});
         } catch (e) {
+            console.log(e);
             next(e);
         }
     },
