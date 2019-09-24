@@ -38,7 +38,7 @@ const fetchData = async (values, setValue) => {
     const usernamesData = await getAllUsers();
     const usernames = usernamesData.map(({ _id, username, firstName, lastName }) => [ _id, `${firstName} ${lastName} (${username})` ]);
 
-    setValue({ ...values, workbooks, orgTypes, originalTypes: orgTypes, usernames, dataFetched: true });
+    setValue({ ...values, workbooks, orgTypes, originalTypes: organizationTypesData, usernames, dataFetched: true });
   } catch(error) {
     console.log(error);
   }
@@ -137,6 +137,7 @@ const CreatePackage = (props) => {
       });
       props.showMessage(data.message, 'success')
     } catch (e) {
+      console.log("error", e)
       props.showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error')
     }
   }, [values, props]);
