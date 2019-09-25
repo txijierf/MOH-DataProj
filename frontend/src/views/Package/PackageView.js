@@ -1,133 +1,114 @@
-import React, {useCallback, useEffect} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
-import {
-  Paper, Grid, Typography, Button, TextField, Fade
-} from '@material-ui/core';
-import {adminGetPackage, userGetPackage, userSubmitPackage} from "../../controller/package";
-import PackageCard from './components/Card';
+import React, { useState, useEffect } from "react";
+
+import { buildErrorParams } from "../../controller/common";
+import { adminGetPackage, userGetPackage, userSubmitPackage } from "../../controller/package";
+
+import uniqid from "uniqid";
+
+import { Paper, Grid, Typography, Button, TextField, Fade } from "@material-ui/core";
+import PackageCard from "./components/Card";
 import Loading from "../components/Loading";
-import {buildErrorParams} from "../../controller/common";
+
+import { makeStyles } from "@material-ui/core/styles";
 
 const useStyles = makeStyles(theme => ({
-  container: {
+  containerStyle: {
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
-    paddingRight: theme.spacing(4),
+    paddingRight: theme.spacing(4)
   },
-  note: {
-    paddingBottom: 10,
+  noteStyle: {
+    paddingBottom: 10
   },
-  adminNotes: {
-    whiteSpace: 'pre'
+  adminNotesStyle: {
+    whiteSpace: "pre"
   }
 }));
 
-export default function PackageView(props) {
-  const {params, showMessage} = props;
-  const admin = params.mode === 'admin';
-  const packageName = props.match.params.name;
-  const organization = props.match.params.organization;
-  const classes = useStyles();
-  const [values, setValues] = React.useState({
-    data: null,
-    userNotes: ''
-  });
+const Package = ({ name, handleOpen }) => (
+  <Grid item>
+    <PackageCard type="excel" fileName={name} onOpen={handleOpen}/>
+  </Grid>
+);
+
+const UserContents = ({ userNotes, noteStyle, handleChangeUserNotes, handleSubmit }) => (
+  <React.Fragment>
+    <TextField label="User Notes" value={userNotes} className={noteStyle} onChange={handleChangeUserNotes} multiline margin="normal" fullWidth/>
+    <Button variant="contained" color="primary" onClick={handleSubmit}>Submit</Button>
+  </React.Fragment>
+);
+
+const AdminContents = ({ userNotes, noteStyle, handleChangeUserNotes }) => <TextField disabled label="User Notes" value={userNotes} className={noteStyle} onChange={handleChangeUserNotes} multiline margin="normal" fullWidth />;
+
+const PackageView = ({ showMessage, params, match, history }) => {
+  const admin = params.mode === "admin";
+  const packageName = match.params.name;
+  const organization = match.params.organization;
+  const { containerStyle, noteStyle, adminNotesStyle } = useStyles();
+
+  const [ data, setData ] = useState(null);
+  const [ userNotes, setUserNotes ] = useState("");
 
   useEffect(() => {
     (admin ? adminGetPackage : userGetPackage)(packageName, organization)
-      .then(data => setValues(values => ({...values, data, userNotes: data.userNotes})))
-      .catch(e => showMessage(...buildErrorParams(e)))
+      .then((data) => {
+        setData(data);
+        setUserNotes(data.userNotes);
+      })
+      .catch((error) => showMessage(...buildErrorParams(error)))
 
-  }, [packageName, organization, admin, showMessage]);
-
-  const allWorkbooks = () => {
-    const list = [];
-    if (values.data == null) return <Loading message="Loading Package..."/>;
-    const {workbooks} = values.data;
-    for (let i = 0; i < workbooks.length; i++) {
-      const name = workbooks[i].name;
-      list.push(
-        <Grid key={i} item>
-          <PackageCard type="excel" fileName={name} onOpen={onOpen}/>
-        </Grid>
-      )
+  }, [ packageName, organization, admin, showMessage ]);
+  
+  const handleOpen = (name) => (
+    () => {
+      if (admin) {
+        history.push(`/admin/packages/view/${packageName}/org/${organization}/workbook/${name}`);
+      } else {
+        history.push(`/packages/${packageName}/${organization}/workbook/${name}`);
+      }
     }
-    return list;
-  };
+  );
 
-  const onOpen = name => e => {
-    if (admin) {
-      props.history.push('/admin/packages/view/' + packageName + '/org/' + organization + '/workbook/' + name);
-    } else {
-      props.history.push('/packages/' + packageName + '/' + organization + '/workbook/' + name);
-    }
-  };
+  const AllWorkbooks = () => (
+    data === null 
+      ? <Loading message="Loading Package..."/>
+      : data.workbooks.map(({ name }) => <Package key={uniqid()} name={name} handleOpen={handleOpen} />)
+  );
 
-  const handleChange = useCallback((name, value) => {
-    setValues(values => ({...values, [name]: value}));
-  }, []);
+  const handleChangeUserNotes = ({ target: { value } }) => setUserNotes(value);
 
-  const handleChangeEvent = name => e => handleChange(name, e.target.value);
-
-  const submit = async () => {
+  const handleSubmit = async () => {
     try {
-      const response = await userSubmitPackage(packageName, organization, {userNotes: values.userNotes});
-      props.showMessage(response.message, 'success');
+      const { message } = await userSubmitPackage(packageName, organization, {userNotes: userNotes});
+      showMessage(message, "success");
     } catch (e) {
-      props.showMessage(...buildErrorParams(e));
+      showMessage(...buildErrorParams(e));
     }
-  };
-
-  const renderUserContents = () => {
-    return (
-      <>
-        <TextField
-          label="User Notes"
-          value={values.userNotes}
-          className={classes.note}
-          onChange={handleChangeEvent('userNotes')}
-          multiline
-          margin="normal"
-          fullWidth
-        />
-        <Button variant="contained" color="primary" onClick={submit}>Submit</Button>
-      </>
-    )
-  };
-
-  const renderAdminContents = () => {
-    return (
-      <>
-        <TextField
-          disabled
-          label="User Notes"
-          value={values.userNotes}
-          className={classes.note}
-          onChange={handleChangeEvent('userNotes')}
-          multiline
-          margin="normal"
-          fullWidth
-        />
-      </>
-    )
   };
 
   return (
     <Fade in>
-      <Paper className={classes.container}>
+      <Paper className={containerStyle}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
               {packageName}
             </Typography>
-            <Typography variant="subtitle1" gutterBottom className={classes.adminNotes}>
-              {values.data ? ('Note: ' + values.data.adminNotes) : ''}
+            <Typography variant="subtitle1" gutterBottom className={adminNotesStyle}>
+              {data ? ("Note: " + data.adminNotes) : ""}
             </Typography>
           </Grid>
-          {allWorkbooks()}
+          <AllWorkbooks/>
         </Grid>
         <br/>
-        {admin ? renderAdminContents() : renderUserContents()}
+        {
+          admin 
+            ? <AdminContents userNotes={userNotes} noteStyle={noteStyle} handleChangeUserNotes={handleChangeUserNotes}/> 
+            : <UserContents userNotes={userNotes} noteStyle={noteStyle} handleChangeUserNotes={handleChangeUserNotes} handleSubmit={handleSubmit}/>
+        }
       </Paper>
-    </Fade>)
-}
+    </Fade>
+  );
+};
+
+export default PackageView;

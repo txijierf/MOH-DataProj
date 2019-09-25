@@ -45,7 +45,9 @@ const packageSchema = new mongoose.Schema({
         user: {type: ObjectId, ref: 'User'},
         status: String,
         reason: String
-    }]
+    }],
+
+    approveStatus: { type: String, default: "TBD" }
 });
 
 module.exports = mongoose.model('Package', packageSchema);

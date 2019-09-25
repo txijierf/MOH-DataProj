@@ -15,19 +15,19 @@ import { getOrganizationTypes } from "../../controller/system"
 import Dropdown from "./components/Dropdown";
 
 const useStyles = makeStyles(theme => ({
-  container: {
+  containerStyle: {
     display: 'flex',
     flexWrap: 'wrap',
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
     paddingRight: theme.spacing(4)
   },
-  textField: {
+  textFieldStyle: {
     width: 400
   }
 }));
 
-const fetchData = async (values, setValue) => {
+const fetchData = async (setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched) => {
   try {
     const workbooksData = await getAllWorkbooksForAdmin();
     const workbooks = workbooksData.map(({ _id, name }) => [ _id, name ]);
@@ -38,7 +38,11 @@ const fetchData = async (values, setValue) => {
     const usernamesData = await getAllUsers();
     const usernames = usernamesData.map(({ _id, username, firstName, lastName }) => [ _id, `${firstName} ${lastName} (${username})` ]);
 
-    setValue({ ...values, workbooks, orgTypes, originalTypes: organizationTypesData, usernames, dataFetched: true });
+    setWorkbooks(workbooks);
+    setOrgTypes(orgTypes);
+    setOriginalTypes(organizationTypesData);
+    setUsernames(usernames);
+    setDataFetched(true);
   } catch(error) {
     console.log(error);
   }
@@ -65,50 +69,55 @@ const WorkflowField = ({ title, options, startDate, endDate, handleOptionChange,
   </div>
 );
 
-const CreatePackage = (props) => {
-  const classes = useStyles();
+const CreatePackage = ({ showMessage }) => {
+  const { containerStyle, textFieldStyle } = useStyles();
 
-  const [values, setValues] = useState({
-    name: '',
-    adminNotes: '',
-    editStartDate: Date.now(),
-    //One week later
-    editEndDate: new Date(Date.now() + 86400000 * 7),
-    reviewStartDate: new Date(Date.now() + 86400000 * 7),
-    reviewEndDate: new Date(Date.now() + 86400000 * 7),
-    approvalStartDate: new Date(Date.now() + 86400000 * 7),
-    approvalEndDate: new Date(Date.now() + 86400000 * 7),
-    workbooks: null,
-    orgTypes: null,
-    originalTypes: null,
-    usernames: null,
-    editors: [],
-    reviewers: [],
-    approvers: [],
-    selectedWorkbooks: [],
-    selectedOrgTypes: [],
-    published: false,
-    dataFetched: false
-  });
+  const [ name, setName ] = useState("");
+  const [ adminNotes, setAdminNotes ] = useState("");
+
+  const [ editStartDate, setEditStartDate ] = useState(Date.now());
+  const [ reviewStartDate, setReviewStartDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ approvalStartDate, setApprovalStartDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ editEndDate, setEditEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ reviewEndDate, setReviewEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ approvalEndDate, setApprovalEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+
+  const [ workbooks, setWorkbooks ] = useState(null);
+  const [ orgTypes, setOrgTypes ] = useState(null);
+  const [ originalTypes, setOriginalTypes ] = useState(null);
+  
+  const [ usernames, setUsernames ] = useState(null);
+  
+  const [ editors, setEditors ] = useState([]);
+  const [ reviewers, setReviewers ] = useState([]);
+  const [ approvers, setApprovers ] = useState([]);
+
+  const [ selectedWorkbooks, setSelectedWorkbooks ] = useState([]);
+  const [ selectedOrgTypes, setSelectedOrgTypes ] = useState([]);
+
+  const [ published, setPublished ] = useState(false);
+  const [ dataFetched, setDataFetched ] = useState(false);
 
   useEffect(() => {
-    if(!values.dataFetched) fetchData(values, setValues);
+    if(!dataFetched) fetchData(setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched);
   });
 
-  const handleChange = useCallback((name, value) => {
-    setValues(values => ({...values, [name]: value}));
-  }, []);
+  const handleChangeAdminNotes = ({ target: { value } }) => setAdminNotes(value);
+  const handleChangeName = ({ target: { value } }) => setName(value);
+  const handleChangePublished = ({ target: { checked } }) => setPublished(checked);
 
-  const handleChangeEvent = name => e => handleChange(name, e.target.value);
-
-  const handleChangeDate = useCallback(name => date => {
-    setValues(values => ({...values, [name]: date}));
-  }, []);
+  // Event change functions for the date picker contains multiple argument, which causes issues with useState's setState. Only use the first argument, which is the date value.
+  const handleEditStartDate = (date) => setEditStartDate(date);
+  const handleEditEndDate = (date) => setEditEndDate(date);
+  const handleReviewStartDate = (date) => setReviewStartDate(date);
+  const handleReviewEndDate = (date) => setReviewEndDate(date);
+  const handleApprovalStartDate = (date) => setApprovalStartDate(date);
+  const handleApprovalEndDate = (date) => setApprovalEndDate(date);
 
   const handleSave = useCallback(async () => {
-    const orgIds = new Set();
-    for (const selectedTypeId of values.selectedOrgTypes) {
-      for (const type of values.originalTypes) {
+    let orgIds = new Set();
+    for (const selectedTypeId of selectedOrgTypes) {
+      for (const type of originalTypes) {
         if (type._id === selectedTypeId) {
           for (const org of type.organizations) {
             orgIds.add(org._id);
@@ -116,43 +125,29 @@ const CreatePackage = (props) => {
         }
       }
     }
+    orgIds = [ ...orgIds ]
+    const workbookIds = selectedWorkbooks;
+    const organizationTypes = selectedOrgTypes;
+
     try {
-      const data = await createPackage({
-        name: values.name,
-        workbookIds: values.selectedWorkbooks,
-        organizationTypes: values.selectedOrgTypes,
-        editors: values.editors,
-        reviewers: values.reviewers,
-        approvers: values.approvers,
-        orgIds: [...orgIds],
-        adminNotes: values.adminNotes,
-        published: values.published,
-        editStartDate: values.editStartDate,
-        editEndDate: values.editEndDate,
-        reviewStartDate: values.reviewStartDate,
-        reviewEndDate: values.reviewEndDate,
-        approvalStartDate: values.approvalStartDate,
-        approvalEndDate: values.approvalEndDate
-
-      });
-      props.showMessage(data.message, 'success')
+      const data = await createPackage({ name, workbookIds, organizationTypes, editors, reviewers, approvers, orgIds, adminNotes, published, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate });
+      showMessage(data.message, 'success');
     } catch (e) {
-      console.log("error", e)
-      props.showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error')
+      showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error');
     }
-  }, [values, props]);
+  }, [ name, selectedWorkbooks, selectedOrgTypes, editors, reviewers, approvers, adminNotes, published, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate ]);
 
-  const publishCheckbox = <Checkbox checked={values.published} color="primary" onChange={e => handleChange('published', e.target.checked)}/>
+  const publishCheckbox = <Checkbox checked={published} color="primary" onChange={handleChangePublished}/>
 
   return (
-    <Paper className={classes.container}>
-      <TextField label="Package Name" className={classes.textField} value={values.name} onChange={handleChangeEvent('name')} margin="normal" autoFocus required/>
-      <TextField label="Admin Notes" value={values.adminNotes} onChange={handleChangeEvent('adminNotes')} multiline margin="normal" fullWidth/>
-      <WorkflowField title="Editors" options={values.usernames} startDate={values.editStartDate} endDate={values.editEndDate} handleOptionChange={(option) => handleChange("editors", option)} handleStartChange={(date) => handleChangeDate("editStartDate", date)} handleEndChange={(date) => handleChange("editEndDate", date)}/>
-      <WorkflowField title="Reviewers" options={values.usernames} startDate={values.reviewStartDate} endDate={values.reviewEndDate} handleOptionChange={(option) => handleChange("reviewers", option)} handleStartChange={(date) => handleChange("reviewStartDate", date)} handleEndChange={(date) => handleChange("reviewEndDate", date)}/>
-      <WorkflowField title="Approvers" options={values.usernames} startDate={values.approvalStartDate} endDate={values.approvalEndDate} handleOptionChange={(option) => handleChange("approval", option)} handleStartChange={(date) => handleChange("approvalStartDate", date)} handleEndChange={(date) => handleChange("approvalEndDate", date)}/>
-      <Dropdown title="Organization Types" options={values.orgTypes} onChange={data => handleChange('selectedOrgTypes', data)}/>
-      <Dropdown title="Workbooks" options={values.workbooks} onChange={data => handleChange('selectedWorkbooks', data)}/>
+    <Paper className={containerStyle}>
+      <TextField label="Package Name" className={textFieldStyle} value={name} onChange={handleChangeName} margin="normal" autoFocus required/>
+      <TextField label="Admin Notes" value={adminNotes} onChange={handleChangeAdminNotes} multiline margin="normal" fullWidth/>
+      <WorkflowField title="Editors" options={usernames} startDate={editStartDate} endDate={editEndDate} handleOptionChange={setEditors} handleStartChange={handleEditStartDate} handleEndChange={handleEditEndDate}/>
+      <WorkflowField title="Reviewers" options={usernames} startDate={reviewStartDate} endDate={reviewEndDate} handleOptionChange={setReviewers} handleStartChange={handleReviewStartDate} handleEndChange={handleReviewEndDate}/>
+      <WorkflowField title="Approvers" options={usernames} startDate={approvalStartDate} endDate={approvalEndDate} handleOptionChange={setApprovers} handleStartChange={handleApprovalStartDate} handleEndChange={handleApprovalEndDate}/>
+      <Dropdown title="Organization Types" options={orgTypes} onChange={setSelectedOrgTypes}/>
+      <Dropdown title="Workbooks" options={workbooks} onChange={setSelectedWorkbooks}/>
       <FormControlLabel style={{width: '100%'}} control={publishCheckbox} label="Publish"/>
       <Button onClick={handleSave} color="primary" variant="contained">Save</Button>
     </Paper>

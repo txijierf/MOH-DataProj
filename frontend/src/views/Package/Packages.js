@@ -11,6 +11,8 @@ import PackageCard from './components/Card';
 import Loading from "../components/Loading";
 import PackagePicker from "./components/Picker";
 
+// import { Badge } from "reactstrap";
+
 import uniqid from "uniqid";
 
 const useStyles = makeStyles((theme) => ({
@@ -21,11 +23,49 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Package = ({ fileName, deleteCb, handleOpen, openParams }) => (
-  <Grid key={uniqid()} item>
-    <PackageCard type="package" fileName={fileName} deleteCb={deleteCb} onOpen={handleOpen} openParams={openParams}/>
-  </Grid>
-);
+/**
+ * Precondition: approval status is not rejected or approved.
+ * Determines the phase of the workflow based on the start and end time of each phase.
+ */
+const computeWorkingPhase = (editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime) => {
+  const currentDate = Date.now();
+  console.log(approvalEndTime);
+  let phase;
+
+  if(currentDate < editStartTime) {
+    phase = "Pre-edit";
+  } else if(currentDate < editEndTime) {
+    phase = "Edit";
+  } else if(currentDate < reviewStartTime) {
+    phase = "Pre-review";
+  } else if(currentDate < reviewEndTime) {
+    phase = "Review";
+  } else if(currentDate < approvalStartTime) {
+    phase = "Pre-approval";
+  } else if(currentDate < approvalEndTime) {
+    phase = "Approval";
+  } else {
+    phase = "Post-approval";
+  };
+
+  return phase;
+};
+
+// const Phase = ({ color, phase }) => <Badge color={color}>{phase}</Badge>;
+
+const Package = ({ fileName, approveStatus, editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime, deleteCb, handleOpen, openParams }) => {
+  let phase;
+
+  approveStatus !== "Approved" || approveStatus !== "Rejected" 
+    ? phase = computeWorkingPhase(editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime)
+    : phase = "Completed";
+  console.log(phase, approveStatus);
+  return (
+    <Grid key={uniqid()} item>
+      <PackageCard type="package" fileName={fileName} deleteCb={deleteCb} onOpen={handleOpen} openParams={openParams}/>
+    </Grid>
+  );
+};
 
 const DialogConfirmationMessage = ({ selectedName }) => (
   <DialogContent>
@@ -51,6 +91,7 @@ const DialogWindow = ({ open, selectedName, handleCloseDialog, handleConfirmDele
     <DialogButtons handleConfirmDelete={handleConfirmDelete} handleCloseDialog={handleCloseDialog}/>
   </Dialog>
 );
+
 
 const UserSelectedOrg = ({ selectedUserOrg, userOrganizations, handleChange }) => {
   if(selectedUserOrg === "") {
@@ -154,13 +195,33 @@ const CreatePackage = ({ showMessage, history, params }) => {
     userGetPackages(value)
       .then((packages) => {
         setSelectedUserOrg(value);
-        setPackages(packages)
+        setPackages(packages);
       });
   };
+        
+  const AllPackages = useMemo(() => (
+    packages.map((_package) => {
+      const { approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartTime: approvalStartDate, approvalEndTime, name } = _package;
 
-  const AllPackages = useMemo(() =>
-    packages.map((_package) => <Package key={uniqid()} deleteCb={isAdmin ? handleOpenDialog: undefined} fileName={_package.name} handleOpen={handleOpen} openParams={[_package]}/>
-  ), [ packages ]);
+      return (
+        <Package 
+          key={uniqid()} 
+          approveStatus={approveStatus}
+          editStartTime={editStartDate}
+          editEndTime={editEndDate}
+          reviewStartTime={reviewStartDate}
+          reviewEndTime={reviewEndDate}
+          approvalStartTime={approvalStartDate} 
+          approvalEndTime={approvalEndTime}
+          approveStatus={approveStatus} 
+          deleteCb={isAdmin ? handleOpenDialog: undefined} 
+          fileName={name} 
+          handleOpen={handleOpen} 
+          openParams={[_package]}
+        />
+      );
+    }
+  )), [ packages ]);  
 
   return (
     <Fade in>
