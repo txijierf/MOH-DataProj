@@ -98,26 +98,8 @@ const CreatePackage = ({ showMessage, history, params }) => {
       ? fetchAndPopulateAdminValues()
       : fetchAndPopulateUserValues();
   }, [ isAdmin ]);
-
   
-  const handleOpen = (name, pickedPackage) => (
-    ({ target }) => {
-      isAdmin
-        ? openPicker(pickedPackage, target)
-        : history.push('/packages/' + name + '/' + selectedUserOrg);
-    }
-  );
-  
-  const handleCloseDialog = () => {
-    if(openDialog) setOpenDialog(false);
-  };
-  
-  const handleOpenDialog = (name) => {
-    if(!openDialog) setOpenDialog(true);
-    if(selectedName !== name) setSelectedName(name);
-  };
-
-  const openPicker = (pickedPackage, anchorEl) => {
+  const handleOpenPicker = (pickedPackage, anchorEl) => {
     const organizations = pickedPackage.organizations.map(({ name }) => name);
 
     if(!organizations.length) {
@@ -131,9 +113,28 @@ const CreatePackage = ({ showMessage, history, params }) => {
     }
   };
 
-  const closePicker = () => {
+  const handleClosePicker = () => {
     if(picker !== null) setPicker(null);
   };
+  
+  
+  const handleOpen = (name, pickedPackage) => (
+    ({ target }) => {
+      isAdmin
+        ? handleOpenPicker(pickedPackage, target)
+        : history.push('/packages/' + name + '/' + selectedUserOrg);
+    }
+  );
+
+  const handleCloseDialog = () => {
+    if(openDialog) setOpenDialog(false);
+  };
+  
+  const handleOpenDialog = (name) => {
+    if(!openDialog) setOpenDialog(true);
+    if(selectedName !== name) setSelectedName(name);
+  };
+
 
   const handleConfirmDelete = () => {
     if(isAdmin) {
@@ -159,7 +160,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
 
   const AllPackages = useMemo(() =>
     packages.map((_package) => <Package key={uniqid()} deleteCb={isAdmin ? handleOpenDialog: undefined} fileName={_package.name} handleOpen={handleOpen} openParams={[_package]}/>
-  ), [ packages ])
+  ), [ packages ]);
 
   return (
     <Fade in>
@@ -172,13 +173,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
           {AllPackages}
         </Grid>
         <DialogWindow open={openDialog} selectedName={selectedName} handleCloseDialog={handleCloseDialog} handleConfirmDelete={handleConfirmDelete}/>
-        <PackagePicker
-          anchorEl={picker}
-          onClose={closePicker}
-          onSelect={handlePickedPackage}
-          options={organizations}
-          title={'Pick an organization'}
-        />
+        <PackagePicker title="Pick an organization" anchorEl={picker} onClose={handleClosePicker} onSelect={handlePickedPackage} options={organizations}/>
       </Paper>
     </Fade>
   );
