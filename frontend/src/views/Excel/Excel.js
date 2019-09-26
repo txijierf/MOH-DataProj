@@ -48,6 +48,9 @@ class Excel extends Component {
       editorCell: null,
       fileName: 'Untitled workbook',
       contextMenu: null,
+      dataFetched: false,
+      attOptions: [],
+      catOptions: []
     };
     this.initialFileName = 'Untitled workbook'; // uploaded file name
     this.excelManager = new ExcelManager(props);
@@ -59,8 +62,8 @@ class Excel extends Component {
     this.editorRef = React.createRef();
 
     // set ID dialog
-    this.attOptions = [];
-    this.catOptions = [];
+    // this.attOptions = [];
+    // this.catOptions = [];
 
     // error dialog
     this.errorDialog = {};
@@ -340,12 +343,22 @@ class Excel extends Component {
     this.setState({contextMenu: {selections, top: e.clientY, left: e.clientX, anchorEl: e.target}})
   };
 
+  fetchData = async () => {
+    const catOptions = await this.attCatManager.get(true);
+    const attOptions = await this.attCatManager.get(false);
+
+    // console.log("options", catOptions, attOptions);
+
+    this.setState({ catOptions, attOptions, dataFetched: true }, ()=>console.log(this.state));
+  };
+
   componentDidMount() {
     const sheetWidth = this.sheetContainerRef.current.offsetWidth;
     const sheetHeight = this.sheetContainerRef.current.offsetHeight;
 
-    this.attCatManager.get(true).then(atts => this.attOptions = atts);
-    this.attCatManager.get(false).then(cats => this.catOptions = cats);
+    if(!this.state.dataFetched) this.fetchData();
+    // this.attCatManager.get(true).then(atts => this.attOptions = atts);
+    // this.attCatManager.get(false).then(cats => this.catOptions = cats);
 
     if (this.mode === 'admin create') {
       // create local workbook storage
@@ -427,6 +440,8 @@ class Excel extends Component {
       || this.state.openDataValidationDialog !== nextState.openDataValidationDialog
       || this.state.openEditor !== nextState.openEditor
       || this.state.contextMenu !== nextState.contextMenu
+      || this.state.catOptions !== nextState.catOptions
+      || this.state.attOptions !== nextState.attOptions
   }
 
   componentWillUnmount() {
@@ -494,8 +509,8 @@ class Excel extends Component {
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}
-            catOptions={this.catOptions}
-            attOptions={this.attOptions}
+            catOptions={this.state.catOptions}
+            attOptions={this.state.attOptions}
             handleSetId={this.handleSetId}
             handleClose={this.handleCloseSetId}
           />

@@ -187,13 +187,6 @@ class SetIdDialog extends Component {
       selectedAtt: props.selectedAtt,
       selectedCat: props.selectedCat
     };
-    const {attOptions, catOptions} = props;
-    this.attOptions = attOptions.map(att => {
-      return {label: att[1], value: att[0]};
-    });
-    this.catOptions = catOptions.map(cat => {
-      return {label: cat[1], value: cat[0]};
-    });
   }
 
   handleChange = name => (selectedOption) => {
@@ -206,6 +199,7 @@ class SetIdDialog extends Component {
   };
 
   render() {
+    console.log("Rendering")
     const {classes, theme} = this.props;
     const selectStyles = {
       input: base => ({
@@ -217,6 +211,18 @@ class SetIdDialog extends Component {
       }),
     };
     const open = Boolean(this.props.anchorEl);
+
+
+    let {attOptions, catOptions} = this.props;
+
+    console.log(attOptions.length, catOptions.length)
+
+    attOptions = attOptions.map(att => {
+      return {label: att[1], value: att[0]};
+    });
+    catOptions = catOptions.map(cat => {
+      return {label: cat[1], value: cat[0]};
+    });
 
     return (
       <Popover
@@ -241,7 +247,7 @@ class SetIdDialog extends Component {
             <Select
               value={this.state.selectedAtt}
               onChange={this.handleChange('selectedAtt')}
-              options={this.attOptions}
+              options={attOptions}
               classes={classes}
               styles={selectStyles}
               components={components}
@@ -258,7 +264,7 @@ class SetIdDialog extends Component {
             <Select
               value={this.state.selectedCat}
               onChange={this.handleChange('selectedCat')}
-              options={this.catOptions}
+              options={catOptions}
               classes={classes}
               styles={selectStyles}
               components={components}
