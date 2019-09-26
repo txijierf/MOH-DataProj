@@ -16,7 +16,7 @@ import PackagePicker from "./components/Picker";
 import uniqid from "uniqid";
 
 const useStyles = makeStyles((theme) => ({
-  container: {
+  containerStyle: {
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
     paddingRight: theme.spacing(4),
@@ -25,24 +25,23 @@ const useStyles = makeStyles((theme) => ({
 
 /**
  * Precondition: approval status is not rejected or approved.
- * Determines the phase of the workflow based on the start and end time of each phase.
+ * Determines the phase of the workflow based on the start and end Date of each phase.
  */
-const computeWorkingPhase = (editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime) => {
+const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate) => {
   const currentDate = Date.now();
-  console.log(approvalEndTime);
   let phase;
 
-  if(currentDate < editStartTime) {
+  if(currentDate < editStartDate) {
     phase = "Pre-edit";
-  } else if(currentDate < editEndTime) {
+  } else if(currentDate < editEndDate) {
     phase = "Edit";
-  } else if(currentDate < reviewStartTime) {
+  } else if(currentDate < reviewStartDate) {
     phase = "Pre-review";
-  } else if(currentDate < reviewEndTime) {
+  } else if(currentDate < reviewEndDate) {
     phase = "Review";
-  } else if(currentDate < approvalStartTime) {
+  } else if(currentDate < approvalStartDate) {
     phase = "Pre-approval";
-  } else if(currentDate < approvalEndTime) {
+  } else if(currentDate < approvalEndDate) {
     phase = "Approval";
   } else {
     phase = "Post-approval";
@@ -53,13 +52,13 @@ const computeWorkingPhase = (editStartTime, editEndTime, reviewStartTime, review
 
 // const Phase = ({ color, phase }) => <Badge color={color}>{phase}</Badge>;
 
-const Package = ({ fileName, approveStatus, editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime, deleteCb, handleOpen, openParams }) => {
+const Package = ({ fileName, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, deleteCb, handleOpen, openParams }) => {
   let phase;
 
   approveStatus !== "Approved" || approveStatus !== "Rejected" 
-    ? phase = computeWorkingPhase(editStartTime, editEndTime, reviewStartTime, reviewEndTime, approvalStartTime, approvalEndTime)
+    ? phase = computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
     : phase = "Completed";
-  console.log(phase, approveStatus);
+
   return (
     <Grid key={uniqid()} item>
       <PackageCard type="package" fileName={fileName} deleteCb={deleteCb} onOpen={handleOpen} openParams={openParams}/>
@@ -111,7 +110,7 @@ const UserSelectedOrg = ({ selectedUserOrg, userOrganizations, handleChange }) =
 const CreatePackage = ({ showMessage, history, params }) => {
   const isAdmin = params.mode === "admin";
 
-  const classes = useStyles();
+  const { containerStyle } = useStyles();
 
   const [ packages, setPackages ] = useState([]);
   const [ openDialog, setOpenDialog ] = useState(false);
@@ -201,18 +200,18 @@ const CreatePackage = ({ showMessage, history, params }) => {
         
   const AllPackages = useMemo(() => (
     packages.map((_package) => {
-      const { approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartTime: approvalStartDate, approvalEndTime, name } = _package;
+      const { approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate: approvalStartDate, approvalEndDate, name } = _package;
 
       return (
         <Package 
           key={uniqid()} 
           approveStatus={approveStatus}
-          editStartTime={editStartDate}
-          editEndTime={editEndDate}
-          reviewStartTime={reviewStartDate}
-          reviewEndTime={reviewEndDate}
-          approvalStartTime={approvalStartDate} 
-          approvalEndTime={approvalEndTime}
+          editStartDate={editStartDate}
+          editEndDate={editEndDate}
+          reviewStartDate={reviewStartDate}
+          reviewEndDate={reviewEndDate}
+          approvalStartDate={approvalStartDate} 
+          approvalEndDate={approvalEndDate}
           approveStatus={approveStatus} 
           deleteCb={isAdmin ? handleOpenDialog: undefined} 
           fileName={name} 
@@ -225,7 +224,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
 
   return (
     <Fade in>
-      <Paper className={classes.container}>
+      <Paper className={containerStyle}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>All Packages</Typography>
