@@ -80,7 +80,7 @@ class AttCatGroup extends Component {
   };
 
   delete = (_id, path) => () => {
-    this.attCatManager.removeAttributeGroup(this.mode === 'att', _id)
+    this.attCatManager.removeGroup(this.mode === 'att', _id)
       .then(res => {
         const treeData = removeNodeAtPath({treeData: this.state.treeData, path, getNodeKey: this.getNodeKey});
         this.showMessage(res.message, 'success');

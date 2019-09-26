@@ -215,8 +215,6 @@ class SetIdDialog extends Component {
 
     let {attOptions, catOptions} = this.props;
 
-    console.log(attOptions.length, catOptions.length)
-
     attOptions = attOptions.map(att => {
       return {label: att[1], value: att[0]};
     });

@@ -183,6 +183,8 @@ module.exports = {
         }
         const _id = req.params._id;
         const groupNumber = req.session.user.groupNumber;
+
+        console.log("Deleting id", req.params);
         try {
             const doc = await AttributeGroup.findOneAndRemove({_id, groupNumber});
             res.json({success: true, message: `Removed attribute group (${_id}, ${doc.name})`});

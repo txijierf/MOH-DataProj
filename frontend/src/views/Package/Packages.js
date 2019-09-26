@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 
 import { adminGetPackages, userGetPackages, adminDeletePackage } from "../../controller/package";
@@ -11,8 +9,6 @@ import PackageCard from './components/Card';
 import Loading from "../components/Loading";
 import PackagePicker from "./components/Picker";
 
-// import { Badge } from "reactstrap";
-
 import uniqid from "uniqid";
 
 const useStyles = makeStyles((theme) => ({
@@ -20,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
     paddingRight: theme.spacing(4),
-  },
+  }
 }));
 
 /**
@@ -50,20 +46,24 @@ const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, review
   return phase;
 };
 
-// const Phase = ({ color, phase }) => <Badge color={color}>{phase}</Badge>;
-
 const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenPackage }) => {
-  let phase = null;
+  let badges = [ { text: published ? "Published" : "Unpublished", color: published ? "success": "secondary" } ];
 
   if(published) {
-    approveStatus !== "Approved" || approveStatus !== "Rejected" 
-      ? phase = computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
-      : phase = "Completed";
+    let phase = approveStatus !== "Approved" || approveStatus !== "Rejected" 
+      ? computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
+      : "Completed";
+
+    badges.push({ text: phase, color: phase === "Completed" ? "success": "secondary" });  
+    
+    if(approveStatus !== "TBD") {
+      badges.push({ text: `Decision: ${approveStatus}`, color: approveStatus === "Approved" ? "success" : "danger" });
+    }
   };
 
   return (
     <Grid key={uniqid()} item>
-      <PackageCard type="package" phase={phase} published={published} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenPackage={handleOpenPackage}/>
+      <PackageCard type="package" badges={badges} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenPackage={handleOpenPackage}/>
     </Grid>
   );
 };
@@ -92,7 +92,6 @@ const DialogWindow = ({ open, selectedName, handleCloseDialog, handleConfirmDele
     <DialogButtons handleConfirmDelete={handleConfirmDelete} handleCloseDialog={handleCloseDialog}/>
   </Dialog>
 );
-
 
 const UserSelectedOrg = ({ selectedUserOrg, userOrganizations, handleChange }) => {
   if(selectedUserOrg === "") {
@@ -135,6 +134,8 @@ const CreatePackage = ({ showMessage, history, params }) => {
     setPackages(userPackages);
   };
 
+
+  // TODO: Set a buffer to prevent set state on unmount.. Not sure if this is affected
   useEffect(() => {
     isAdmin
       ? fetchAndPopulateAdminValues()
@@ -158,18 +159,16 @@ const CreatePackage = ({ showMessage, history, params }) => {
     if(picker !== null) setPicker(null);
   };
   
-  
   const handleOpen = (name, pickedPackage, target) => (
-      isAdmin
-        ? handleOpenPicker(pickedPackage, target)
-        : history.push('/packages/' + name + '/' + selectedUserOrg)
+    isAdmin
+      ? handleOpenPicker(pickedPackage, target)
+      : history.push('/packages/' + name + '/' + selectedUserOrg)
   );
 
   const handleCloseDialog = () => {
     if(openDialog) setOpenDialog(false);
   };
   
-
 
   const handleConfirmDelete = () => {
     if(isAdmin) {
@@ -195,7 +194,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
         
   const AllPackages = useMemo(() => (
     packages.map((_package) => {
-      const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate: approvalStartDate, approvalEndDate, name } = _package;
+      const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, name } = _package;
 
       const handleOpenPackage = ({ target }) => handleOpen(name, _package, target);
       const handleOpenDeleteDialog = () => {
@@ -206,6 +205,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
       return (
         <Package 
           key={uniqid()}
+          fileName={name} 
           published={published} 
           approveStatus={approveStatus}
           editStartDate={editStartDate}
@@ -216,7 +216,6 @@ const CreatePackage = ({ showMessage, history, params }) => {
           approvalEndDate={approvalEndDate}
           approveStatus={approveStatus} 
           handleOpenDeleteDialog={isAdmin && handleOpenDeleteDialog} 
-          fileName={name}  
           handleOpenPackage={handleOpenPackage}
         />
       );

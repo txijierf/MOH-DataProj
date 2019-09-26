@@ -129,6 +129,7 @@ export default class AttCatManager {
   updateCategoryGroup = (tree) => this.updateGroup(false, tree);
 
   removeGroup(isAttribute, _id) {
+    console.log("Removing group", _id);
     const what = isAttribute ? 'attribute' : 'category';
     return axios.delete(`${config.server}/api/v2/${what}/group/${_id}`, axiosConfig)
       .then(response => {
