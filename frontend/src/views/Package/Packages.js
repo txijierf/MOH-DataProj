@@ -52,16 +52,18 @@ const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, review
 
 // const Phase = ({ color, phase }) => <Badge color={color}>{phase}</Badge>;
 
-const Package = ({ fileName, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, deleteCb, handleOpen, openParams }) => {
-  let phase;
+const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenPackage }) => {
+  let phase = null;
 
-  approveStatus !== "Approved" || approveStatus !== "Rejected" 
-    ? phase = computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
-    : phase = "Completed";
+  if(published) {
+    approveStatus !== "Approved" || approveStatus !== "Rejected" 
+      ? phase = computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
+      : phase = "Completed";
+  };
 
   return (
     <Grid key={uniqid()} item>
-      <PackageCard type="package" fileName={fileName} deleteCb={deleteCb} onOpen={handleOpen} openParams={openParams}/>
+      <PackageCard type="package" phase={phase} published={published} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenPackage={handleOpenPackage}/>
     </Grid>
   );
 };
@@ -141,7 +143,6 @@ const CreatePackage = ({ showMessage, history, params }) => {
   
   const handleOpenPicker = (pickedPackage, anchorEl) => {
     const organizations = pickedPackage.organizations.map(({ name }) => name);
-
     if(!organizations.length) {
       console.log("No organizations");
     } else if(organizations.length === 1) {
@@ -158,22 +159,16 @@ const CreatePackage = ({ showMessage, history, params }) => {
   };
   
   
-  const handleOpen = (name, pickedPackage) => (
-    ({ target }) => {
+  const handleOpen = (name, pickedPackage, target) => (
       isAdmin
         ? handleOpenPicker(pickedPackage, target)
-        : history.push('/packages/' + name + '/' + selectedUserOrg);
-    }
+        : history.push('/packages/' + name + '/' + selectedUserOrg)
   );
 
   const handleCloseDialog = () => {
     if(openDialog) setOpenDialog(false);
   };
   
-  const handleOpenDialog = (name) => {
-    if(!openDialog) setOpenDialog(true);
-    if(selectedName !== name) setSelectedName(name);
-  };
 
 
   const handleConfirmDelete = () => {
@@ -200,11 +195,18 @@ const CreatePackage = ({ showMessage, history, params }) => {
         
   const AllPackages = useMemo(() => (
     packages.map((_package) => {
-      const { approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate: approvalStartDate, approvalEndDate, name } = _package;
+      const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate: approvalStartDate, approvalEndDate, name } = _package;
 
+      const handleOpenPackage = ({ target }) => handleOpen(name, _package, target);
+      const handleOpenDeleteDialog = () => {
+        if(!openDialog) setOpenDialog(true);
+        if(selectedName !== name) setSelectedName(name);
+      };
+    
       return (
         <Package 
-          key={uniqid()} 
+          key={uniqid()}
+          published={published} 
           approveStatus={approveStatus}
           editStartDate={editStartDate}
           editEndDate={editEndDate}
@@ -213,10 +215,9 @@ const CreatePackage = ({ showMessage, history, params }) => {
           approvalStartDate={approvalStartDate} 
           approvalEndDate={approvalEndDate}
           approveStatus={approveStatus} 
-          deleteCb={isAdmin ? handleOpenDialog: undefined} 
-          fileName={name} 
-          handleOpen={handleOpen} 
-          openParams={[_package]}
+          handleOpenDeleteDialog={isAdmin && handleOpenDeleteDialog} 
+          fileName={name}  
+          handleOpenPackage={handleOpenPackage}
         />
       );
     }
