@@ -52,6 +52,7 @@ export default class AttCatManager {
           const res = [];
           for (let i = 0; i < data.length; i++) {
             const item = data[i];
+
             res.push([item.id, item.name, item.description || '', item._id, item.groups]);
           }
           return res;

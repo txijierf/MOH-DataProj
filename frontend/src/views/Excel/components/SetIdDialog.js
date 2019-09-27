@@ -206,6 +206,7 @@ class SetIdDialog extends Component {
   };
 
   render() {
+
     const {classes, theme} = this.props;
     const selectStyles = {
       input: base => ({
@@ -217,6 +218,7 @@ class SetIdDialog extends Component {
       }),
     };
     const open = Boolean(this.props.anchorEl);
+
 
     return (
       <Popover

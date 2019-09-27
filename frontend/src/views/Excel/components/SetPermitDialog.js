@@ -144,6 +144,8 @@ class SetPermitDialog extends Component {
     this.state = {
       userPermit: props.userPermit
     };
+    console.log(this.state.userPermit);
+
     const {permitOptions} = props;
     //
     this.permitOptions = [{label: 'read only', value: true}, {label:'editor mode', value: false}];
@@ -205,7 +207,8 @@ class SetPermitDialog extends Component {
                 },
               }}
               isClearable
-              placeholder={"UserPermit"}
+              // //placeholder={this.state.userPermit.label}
+              // placeholder={'user'}
             />
 
           </NoSsr>

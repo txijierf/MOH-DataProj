@@ -22,7 +22,7 @@ import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
 import Loading from "../components/Loading";
 import RightClickMenu from "./components/RightClickMenu";
-// import Cell from "..../node_modules/xlsx-populate/lib/worksheets/Cell"
+import Cell from "/Users/carrs/WebstormProjects/MOHLTC-DataProject/frontend/src/views/Excel/components/Cell.js"
 
 class Excel extends Component {
 
@@ -50,13 +50,19 @@ class Excel extends Component {
 
       openDropdown: null,
       openDataValidationDialog: false,
-      excelChanged: false,
       openEditor: null,
       dropdownCell: null,
       setIdCell: null,
+      setPermitCell: null,
       editorCell: null,
       fileName: 'Untitled workbook',
       contextMenu: null,
+
+      // set ID dialog
+      attOptions: [],
+      catOptions: [],
+      waitAttOptResolve: true,
+      waitCatOptResolve: true
     };
     this.initialFileName = 'Untitled workbook'; // uploaded file name
     this.excelManager = new ExcelManager(props);
@@ -67,9 +73,7 @@ class Excel extends Component {
     this.sheetRef = React.createRef();
     this.editorRef = React.createRef();
 
-    // set ID dialog
-    this.attOptions = [];
-    this.catOptions = [];
+
 
     //set permit dialog
     this.permitOptions = [];
@@ -81,26 +85,44 @@ class Excel extends Component {
     this.menu = {
       'Set ID': (anchorEl) => {
         console.log('SET ID');
+
         this.setId(anchorEl);
       },
       'Set User Permit': (anchorEl) => {
         console.log('Set User Permit');
         this.setPermission(anchorEl);
       },
+
       'div1': null,
-      'Add New Attribute': () => {
-        console.log('Add New Attribute');
-        this.addAttribute();
-        this.setState({contextMenu: null})
-      },
-      'Add New Category': () => {
+
+      'Add New Row': (anchorEl) => {
         console.log('Add New Category');
         this.addCategory();
-        this.setState({contextMenu: null})
+        this.setState({contextMenu: null});
+        //this.setId(anchorEl);
       },
+      'Add New Column': (anchorEl) => {
+        console.log('Add New Attribute');
+        this.addAttribute();
+        this.setState({contextMenu: null});
+        //this.setId(anchorEl);
+      },
+
+      'Delete Row': () => {
+        console.log('Delete Category');
+        this.delCategory();
+        this.setState({contextMenu: null});
+      },
+      'Delete Column': () => {
+        console.log('Delete Attribute');
+        this.delAttribute();
+        this.setState({contextMenu: null});
+      },
+
       'div2': null,
+
       'Copy \t\t\t Ctrl+C': () => {
-        this.setState({contextMenu: null})
+        this.setState({contextMenu: null});
       },
       'Paste \t\t\t Ctrl+V': async () => {
         const result = await navigator.permissions.query({name: "clipboard-read"});
@@ -259,7 +281,10 @@ class Excel extends Component {
   setPermission = (anchorEl) => {
     const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
     console.log('selected', cell);
-    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
+
+    const permitLable = ['editor mode', 'read only'];
+    const userPermit = {label: permitLable[cell.getCellPermit()], value: cell.getCellPermit()}
+    this.setState({contextMenu: null, openSetPermit: anchorEl, setPermitCell: cell, userPermit: userPermit});
   }
 
   handleSetId = (att = {}, cat = {}) => {
@@ -280,15 +305,15 @@ class Excel extends Component {
 
   handleSetPermit = (pmt = {}) => {
     console.log(`Set Permit`, pmt);
-    const cell = this.state.setIdCell;
-    cell.setCellPermit(true);
+    const cell = this.state.setPermitCell;
     const permitCell = cell.getCellPermit();
-    if(permitCell !== pmt) {
+    if(permitCell !== pmt.value) {
       this.props.showMessage('Content is overridden.', "info");
     }
-    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt || '');
-
-    this.setState({openSetPermit: null, setIdCell: null});
+    console.log(permitCell);
+    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt.value || '');
+    console.log(permitCell);
+    this.setState({openSetPermit: null, setPermitCell: null});
   };
 
   handleCloseSetId = () => {
@@ -407,8 +432,10 @@ class Excel extends Component {
     const sheetWidth = this.sheetContainerRef.current.offsetWidth;
     const sheetHeight = this.sheetContainerRef.current.offsetHeight;
 
-    this.attCatManager.get(true).then(atts => this.attOptions = atts);
-    this.attCatManager.get(false).then(cats => this.catOptions = cats);
+    this.attCatManager.get(true).then(atts => this.setState({attOptions: atts, waitAttOptResolve: false}));
+    this.attCatManager.get(false).then(cats => this.setState({catOptions: cats, waitCatOptResolve: false}));
+    // this.attOptions = this.attCatManager.get(true);
+    // this.catOptions = this.attCatManager.get(false);
 
     if (this.mode === 'admin create') {
       // create local workbook storage
@@ -483,6 +510,8 @@ class Excel extends Component {
       || this.state.sheetHeight !== nextState.sheetHeight
       || this.state.loadingMessage !== nextState.loadingMessage
       || this.state.loaded !== nextState.loaded
+      || this.state.waitCatOptResolve !== nextState.waitCatOptResolve
+      || this.state.waitAttOptResolve !== nextState.waitAttOptResolve
       || this.state.currentSheetIdx !== nextState.currentSheetIdx
       || this.state.openSetId !== nextState.openSetId
       || this.state.openSetPermit !== nextState.openSetPermit
@@ -535,19 +564,34 @@ class Excel extends Component {
 
   addAttribute() {
     const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
-
+    this.sheet.addColumn(cell.columnNumber());
+    this.renderCurrentSheet();
   }
 
   addCategory() {
     const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
     this.sheet.addRow(cell.rowNumber());
+    this.renderCurrentSheet();
+  }
+
+  delAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    console.log(cell.columnNumber());
+    this.sheet.deleteColumn(cell.columnNumber());
+    this.renderCurrentSheet();
+  }
+
+  delCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.deleteRow(cell.rowNumber());
+    this.renderCurrentSheet();
   }
 
   render() {
     console.log('render create excel');
     const height = this.mode === 'user' ? 'calc(100vh - 55px - 45.8px - 50px - 100px)'
       : 'calc(100vh - 55px - 45.8px - 50px - 35px - 50px - 58px)';
-    if (!this.isLoaded) {
+    if (!this.isLoaded || this.state.waitAttOptResolve || this.state.waitCatOptResolve) {
       return (
         <div style={{height}}
              ref={this.sheetContainerRef}>
@@ -568,7 +612,7 @@ class Excel extends Component {
           </Card>
           <SetPermitDialog
             anchorEl={this.state.openSetPermit}
-            cell={this.state.setIdCell}
+            cell={this.state.setPermitCell}
             permitOptions={this.permitOptions}
             handleSetPermit={this.handleSetPermit}
             handleClose={this.handleCloseSetPermit}
@@ -576,8 +620,8 @@ class Excel extends Component {
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}
-            catOptions={this.catOptions}
-            attOptions={this.attOptions}
+            attOptions={this.state.attOptions}
+            catOptions={this.state.catOptions}
             handleSetId={this.handleSetId}
             handleClose={this.handleCloseSetId}
           />
