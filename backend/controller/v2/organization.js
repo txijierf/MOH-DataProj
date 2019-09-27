@@ -98,10 +98,19 @@ module.exports = {
         if (!checkPermission(req, Permission.SYSTEM_MANAGEMENT)) {
             return next(error.api.NO_PERMISSION);
         }
+
         const groupNumber = req.session.user.groupNumber;
         const {name, userId} = req.params;
         try {
             const doc = await Organization.findOne({name, groupNumber});
+
+            // Check for possible duplicate
+            doc.users.forEach((id) => {
+                if(userId == id) {
+                    return res.json({ message: `User is already in the organization ${name}.` });
+                }
+            });
+
             doc.users.push(userId);
             await doc.save();
             return res.json({message: `User added to ${name}`});
