@@ -122,24 +122,32 @@ const CreatePackage = ({ showMessage, history, params }) => {
   const [ userOrganizations, setUserOrganizations ] = useState([]);
   const [ selectedUserOrg, setSelectedUserOrg ] = useState("");
 
-  const fetchAndPopulateAdminValues = () => adminGetPackages().then((adminPackages) => setPackages(adminPackages));
+  // Unmount async condition - acts as a buffer to prevent set state on unmounted component
+  let isSubscribed = true;
+
+  const fetchAndPopulateAdminValues = () => adminGetPackages().then((adminPackages) => {
+    if(isSubscribed) setPackages(adminPackages);
+  });
 
   const fetchAndPopulateUserValues = async () => {
     const userOrganizations = await getCurrentUserOrganizations();
     const selectedUserOrg = userOrganizations[0];
     const userPackages = await userGetPackages(selectedUserOrg);
 
-    setUserOrganizations(userOrganizations);
-    setSelectedUserOrg(selectedUserOrg);
-    setPackages(userPackages);
+    if(isSubscribed) {
+      setUserOrganizations(userOrganizations);
+      setSelectedUserOrg(selectedUserOrg);
+      setPackages(userPackages);
+    }
   };
-
 
   // TODO: Set a buffer to prevent set state on unmount.. Not sure if this is affected
   useEffect(() => {
     isAdmin
       ? fetchAndPopulateAdminValues()
       : fetchAndPopulateUserValues();
+
+    return () => isSubscribed = false;
   }, [ isAdmin ]);
   
   const handleOpenPicker = (pickedPackage, anchorEl) => {

@@ -27,26 +27,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const fetchData = async (setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched) => {
-  try {
-    const workbooksData = await getAllWorkbooksForAdmin();
-    const workbooks = workbooksData.map(({ _id, name }) => [ _id, name ]);
 
-    const organizationTypesData = await getOrganizationTypes();
-    const orgTypes = organizationTypesData.map(({ _id, name }) => [ _id, name ]);
-
-    const usernamesData = await getAllUsers();
-    const usernames = usernamesData.map(({ _id, username, firstName, lastName }) => [ _id, `${firstName} ${lastName} (${username})` ]);
-
-    setWorkbooks(workbooks);
-    setOrgTypes(orgTypes);
-    setOriginalTypes(organizationTypesData);
-    setUsernames(usernames);
-    setDataFetched(true);
-  } catch(error) {
-    console.log(error);
-  }
-};
 
 const TimePickerContainer = ({ label, value, handleChange }) => (
   <Grid item>
@@ -97,9 +78,37 @@ const CreatePackage = ({ showMessage }) => {
 
   const [ published, setPublished ] = useState(false);
   const [ dataFetched, setDataFetched ] = useState(false);
+  
+  // Unmounted set state buffer
+  let isSubscribed = true;
+
+  const fetchData = async () => {
+    try {
+      const workbooksData = await getAllWorkbooksForAdmin();
+      
+      const organizationTypesData = await getOrganizationTypes();
+      
+      const usernamesData = await getAllUsers();
+      
+      const usernames = usernamesData.map(({ _id, username, firstName, lastName }) => [ _id, `${firstName} ${lastName} (${username})` ]);
+      const workbooks = workbooksData.map(({ _id, name }) => [ _id, name ]);
+      const orgTypes = organizationTypesData.map(({ _id, name }) => [ _id, name ]);
+      
+      if(isSubscribed) {
+        setWorkbooks(workbooks);
+        setOrgTypes(orgTypes);
+        setOriginalTypes(organizationTypesData);
+        setUsernames(usernames);
+        setDataFetched(true);
+      }
+    } catch(error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    if(!dataFetched) fetchData(setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched);
+    if(isSubscribed && !dataFetched) fetchData(setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched);
+    return () => isSubscribed = false;
   });
 
   const handleChangeAdminNotes = ({ target: { value } }) => setAdminNotes(value);
