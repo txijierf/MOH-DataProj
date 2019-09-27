@@ -99,7 +99,7 @@ const FileCard = ({ fileName, badges, handleOpenDeleteDialog, type, handleOpenPa
   return (
     <Card className={cardStyle} elevation={2}>
       <FileCardContent cardContentStyle={cardContentStyle} excelIconStyle={excelIconStyle} packageIconStyle={packageIconStyle} type={type} fileName={fileName} handleOpenPackage={handleOpenPackage}/>
-      <FileCardBadges cardBadgeStyle={cardBadgeStyle} cardBadgesStyle={cardBadgesStyle} badges={badges}/>
+      {type === "package" && <FileCardBadges cardBadgeStyle={cardBadgeStyle} cardBadgesStyle={cardBadgesStyle} badges={badges}/>}
       <FileCardActions cardActionsStyle={cardActionsStyle} handleOpenPackage={handleOpenPackage} handleOpenDeleteDialog={handleOpenDeleteDialog}/>
     </Card>
   );
