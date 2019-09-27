@@ -57,8 +57,8 @@ class RegistrationRequests extends Component {
             columns={[
               {title: 'username', field: 'username'},
               {title: 'email', field: 'email'},
-              {title: "Group Number", field: "Group"},
-              {title: 'Organization', field: 'Organization'},
+              {title: "Group Number", field: "groupNumber"},
+              {title: 'Organization', field: 'organization'},
               {
                 title: 'validated', field: 'validated',
                 render: rowData => {
