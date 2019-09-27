@@ -63,9 +63,9 @@ const FileCardIcon = ({ type, excelIconStyle, packageIconStyle }) => (
   </Grid>
 );
 
-const FileCardContent = ({ cardContentStyle, excelIconStyle, packageIconStyle, type, fileName, handleOpenPackage }) => (
+const FileCardContent = ({ cardContentStyle, excelIconStyle, packageIconStyle, type, fileName, handleOpenFile }) => (
   <Tooltip title={fileName} placement="bottom" enterDelay={300}>
-    <CardActionArea onClick={handleOpenPackage}>
+    <CardActionArea onClick={handleOpenFile}>
       <CardContent className={cardContentStyle}>
         <Grid container alignItems="center" justify="center" spacing={2}>
           <FileCardIcon type={type} excelIconStyle={excelIconStyle} packageIconStyle={packageIconStyle}/>
@@ -76,9 +76,9 @@ const FileCardContent = ({ cardContentStyle, excelIconStyle, packageIconStyle, t
   </Tooltip>
 );
 
-const FileCardActions = ({ cardActionsStyle, handleOpenPackage, handleOpenDeleteDialog }) => (
+const FileCardActions = ({ cardActionsStyle, handleOpenFile, handleOpenDeleteDialog }) => (
   <CardActions className={cardActionsStyle} disableSpacing>
-    <Button size="small" color="primary" onClick={handleOpenPackage}>Open</Button>
+    <Button size="small" color="primary" onClick={handleOpenFile}>Open</Button>
     <Button size="small" color="primary">Edit</Button>
     {handleOpenDeleteDialog && <Button size="small" color="primary" onClick={handleOpenDeleteDialog}>Delete</Button>}
   </CardActions>
@@ -93,14 +93,14 @@ const FileCardBadges = ({ cardBadgeStyle, cardBadgesStyle, badges }) => {
   );
 };
 
-const FileCard = ({ fileName, badges, handleOpenDeleteDialog, type, handleOpenPackage }) => {
+const FileCard = ({ fileName, badges, handleOpenDeleteDialog, type, handleOpenFile }) => {
   const { cardStyle, cardContentStyle, cardActionsStyle, cardBadgeStyle, cardBadgesStyle, excelIconStyle, packageIconStyle } = useStyles();
 
   return (
     <Card className={cardStyle} elevation={2}>
-      <FileCardContent cardContentStyle={cardContentStyle} excelIconStyle={excelIconStyle} packageIconStyle={packageIconStyle} type={type} fileName={fileName} handleOpenPackage={handleOpenPackage}/>
+      <FileCardContent cardContentStyle={cardContentStyle} excelIconStyle={excelIconStyle} packageIconStyle={packageIconStyle} type={type} fileName={fileName} handleOpenFile={handleOpenFile}/>
       {type === "package" && <FileCardBadges cardBadgeStyle={cardBadgeStyle} cardBadgesStyle={cardBadgesStyle} badges={badges}/>}
-      <FileCardActions cardActionsStyle={cardActionsStyle} handleOpenPackage={handleOpenPackage} handleOpenDeleteDialog={handleOpenDeleteDialog}/>
+      <FileCardActions cardActionsStyle={cardActionsStyle} handleOpenFile={handleOpenFile} handleOpenDeleteDialog={handleOpenDeleteDialog}/>
     </Card>
   );
 };

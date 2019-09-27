@@ -25,9 +25,9 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const Package = ({ name, handleOpen }) => (
+const Package = ({ name, handleOpenFile }) => (
   <Grid item>
-    <PackageCard type="excel" fileName={name} onOpen={handleOpen}/>
+    <PackageCard type="excel" fileName={name} handleOpenFile={handleOpenFile}/>
   </Grid>
 );
 
@@ -59,20 +59,20 @@ const PackageView = ({ showMessage, params, match, history }) => {
 
   }, [ packageName, organization, admin, showMessage ]);
   
-  const handleOpen = (name) => (
-    () => {
-      if (admin) {
-        history.push(`/admin/packages/view/${packageName}/org/${organization}/workbook/${name}`);
-      } else {
-        history.push(`/packages/${packageName}/${organization}/workbook/${name}`);
-      }
-    }
-  );
-
   const AllWorkbooks = () => (
     data === null 
-      ? <Loading message="Loading Package..."/>
-      : data.workbooks.map(({ name }) => <Package key={uniqid()} name={name} handleOpen={handleOpen} />)
+    ? <Loading message="Loading Package..."/>
+    : data.workbooks.map(({ name }) => {
+        const handleOpenFile = () => {
+          if (admin) {
+            history.push(`/admin/packages/view/${packageName}/org/${organization}/workbook/${name}`);
+          } else {
+            history.push(`/packages/${packageName}/${organization}/workbook/${name}`);
+          }
+        };
+
+        return <Package key={uniqid()} name={name} handleOpenFile={handleOpenFile} />
+      })
   );
 
   const handleChangeUserNotes = ({ target: { value } }) => setUserNotes(value);
@@ -91,12 +91,8 @@ const PackageView = ({ showMessage, params, match, history }) => {
       <Paper className={containerStyle}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              {packageName}
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom className={adminNotesStyle}>
-              {data ? ("Note: " + data.adminNotes) : ""}
-            </Typography>
+            <Typography variant="h6" gutterBottom>{packageName}</Typography>
+            <Typography variant="subtitle1" gutterBottom className={adminNotesStyle}>{data ? ("Note: " + data.adminNotes) : ""}</Typography>
           </Grid>
           <AllWorkbooks/>
         </Grid>

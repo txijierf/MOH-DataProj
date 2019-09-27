@@ -46,7 +46,7 @@ const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, review
   return phase;
 };
 
-const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenPackage }) => {
+const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenFile }) => {
   let badges = [ { text: published ? "Published" : "Unpublished", color: published ? "success": "secondary" } ];
 
   if(published) {
@@ -63,7 +63,7 @@ const Package = ({ fileName, published, approveStatus, editStartDate, editEndDat
 
   return (
     <Grid key={uniqid()} item>
-      <PackageCard type="package" badges={badges} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenPackage={handleOpenPackage}/>
+      <PackageCard type="package" badges={badges} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenFile={handleOpenFile}/>
     </Grid>
   );
 };
@@ -204,7 +204,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
     packages.map((_package) => {
       const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, name } = _package;
 
-      const handleOpenPackage = ({ target }) => handleOpen(name, _package, target);
+      const handleOpenFile = ({ target }) => handleOpen(name, _package, target);
       const handleOpenDeleteDialog = () => {
         if(!openDialog) setOpenDialog(true);
         if(selectedName !== name) setSelectedName(name);
@@ -224,7 +224,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
           approvalEndDate={approvalEndDate}
           approveStatus={approveStatus} 
           handleOpenDeleteDialog={isAdmin && handleOpenDeleteDialog} 
-          handleOpenPackage={handleOpenPackage}
+          handleOpenFile={handleOpenFile}
         />
       );
     }
