@@ -141,7 +141,6 @@ const CreatePackage = ({ showMessage, history, params }) => {
     }
   };
 
-  // TODO: Set a buffer to prevent set state on unmount.. Not sure if this is affected
   useEffect(() => {
     isAdmin
       ? fetchAndPopulateAdminValues()
@@ -167,17 +166,10 @@ const CreatePackage = ({ showMessage, history, params }) => {
     if(picker !== null) setPicker(null);
   };
   
-  const handleOpen = (name, pickedPackage, target) => (
-    isAdmin
-      ? handleOpenPicker(pickedPackage, target)
-      : history.push('/packages/' + name + '/' + selectedUserOrg)
-  );
-
   const handleCloseDialog = () => {
     if(openDialog) setOpenDialog(false);
   };
   
-
   const handleConfirmDelete = () => {
     if(isAdmin) {
       adminDeletePackage(selectedName)
@@ -204,7 +196,12 @@ const CreatePackage = ({ showMessage, history, params }) => {
     packages.map((_package) => {
       const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, name } = _package;
 
-      const handleOpenFile = ({ target }) => handleOpen(name, _package, target);
+      const handleOpenFile = ({ target }) => {
+        isAdmin
+          ? handleOpenPicker(_package, target)
+          : history.push('/packages/' + name + '/' + selectedUserOrg)
+      };
+
       const handleOpenDeleteDialog = () => {
         if(!openDialog) setOpenDialog(true);
         if(selectedName !== name) setSelectedName(name);

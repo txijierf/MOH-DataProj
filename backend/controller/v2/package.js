@@ -40,6 +40,7 @@ module.exports = {
      * Admin gets a single package.
      */
     adminGetPackage: async (req, res, next) => {
+        console.log("Gettting packaaaaaaaaaaage")
         if (!checkPermission(req, Permission.PACKAGE_MANAGEMENT)) {
             return next(error.api.NO_PERMISSION);
         }
@@ -68,12 +69,16 @@ module.exports = {
                         adminFiles, name
                     }
                 })
-            } else {
-                return next({
-                    status: 400,
-                    message: `The organization (${organization}) has not submitted this package (${name}).`
-                });
             }
+            // } else {
+                // TODO: Redesign this... Not supposed to throw an error
+                // return next({
+                //     status: 400,
+                //     message: `The organization (${organization}) has not submitted this package (${name}).`
+                // });
+            // }
+            res.json({});
+
         } catch (e) {
             next(e);
         }

@@ -48,32 +48,43 @@ const PackageView = ({ showMessage, params, match, history }) => {
 
   const [ data, setData ] = useState(null);
   const [ userNotes, setUserNotes ] = useState("");
+  const [ dataFetched, setDataFetched ] = useState(false);
 
   useEffect(() => {
     (admin ? adminGetPackage : userGetPackage)(packageName, organization)
       .then((data) => {
-        setData(data);
-        setUserNotes(data.userNotes);
+        setDataFetched(true);
+
+        if(data !== {} && typeof data !== "undefined") {
+          setData(data);
+          setUserNotes(data.userNotes);
+        }
       })
       .catch((error) => showMessage(...buildErrorParams(error)))
 
   }, [ packageName, organization, admin, showMessage ]);
   
-  const AllWorkbooks = () => (
-    data === null 
-    ? <Loading message="Loading Package..."/>
-    : data.workbooks.map(({ name }) => {
-        const handleOpenFile = () => {
-          if (admin) {
-            history.push(`/admin/packages/view/${packageName}/org/${organization}/workbook/${name}`);
-          } else {
-            history.push(`/packages/${packageName}/${organization}/workbook/${name}`);
-          }
-        };
+  const AllWorkbooks = () => {
+    if(dataFetched) {
+      if(data !== null && data !== {} && typeof data !== "undefined") {
+        return data.workbooks.map(({ name }) => {
+          const handleOpenFile = () => {
+            if (admin) {
+              history.push(`/admin/packages/view/${packageName}/org/${organization}/workbook/${name}`);
+            } else {
+              history.push(`/packages/${packageName}/${organization}/workbook/${name}`);
+            }
+          };
+  
+          return <Package key={uniqid()} name={name} handleOpenFile={handleOpenFile} />
+        });
+      } else {
+        return <p>No Submission</p>
+      }
+    }
 
-        return <Package key={uniqid()} name={name} handleOpenFile={handleOpenFile} />
-      })
-  );
+    return <Loading message="Loading Package..."/>;
+  };
 
   const handleChangeUserNotes = ({ target: { value } }) => setUserNotes(value);
 
