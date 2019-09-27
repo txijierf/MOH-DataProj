@@ -158,6 +158,9 @@ module.exports = {
         }
     },
 
+
+    // TODO: User may already be validated. 
+    // TODO: Restrict approvers to managers of the organization? - How does roles and permission differ?
     edit_validated: async (req, res, next) => {
         if (!req.session.user.permissions.includes(config.permissions.USER_MANAGEMENT)) {
             return res.status(403).json({success: false, message: error.api.NO_PERMISSION})
@@ -171,21 +174,20 @@ module.exports = {
                 username: req.params.username,
                 groupNumber: req.session.user.groupNumber
             };
-            let update;
-            if (req.body.organization) {
-                update = {validated: req.body.organization};
-            }
+            let update = { validated: true };
+
             const result = await User.findOneAndUpdate(filter, update, {
                 new: true
             });
+
+            console.log("Result", result, req.body.organi);
             return res.status(200).json({success: true, message: 'updated!', user: result});
         } catch (e) {
             next(e);
         }
     },
 
-    edit_user_validated:
-        async (req, res, next) => {
+    edit_user_validated: async (req, res, next) => {
             if (!req.session.user.permissions.includes(config.permissions.USER_MANAGEMENT)) {
                 return res.status(403).json({success: false, message: error.api.NO_PERMISSION})
             }
