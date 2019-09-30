@@ -324,6 +324,8 @@ module.exports = {
         });
     },
 
+
+    // TODO : find purpose... not used when user signs up
     user_sign_up: (req, res, next) => {
         // check if email is taken (passport will check other errors, i.e. username taken)
         User.findOne({username: req.body.username}, (err, user) => {
