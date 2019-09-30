@@ -575,15 +575,26 @@ module.exports = {
         }
     },
 
+    // TODO - Only allow if user is an editor and if the phase is edit?
     userSaveWorkbook: async (req, res, next) => {
         const {packageName, name, organization} = req.params;
         const groupNumber = req.session.user.groupNumber;
         const currentUserId = req.session.user._id;
         const {values} = req.body;
+
         try {
             const result = await userGetPackageAndWorkbook(next, currentUserId, organization, groupNumber, packageName, name);
             if (!result) return;
             let {workbook, pack, organizations} = result;
+
+            const { editors, editStartDate, editEndDate } = pack;
+
+            const date = Date.now();
+
+            if(!editors.includes(currentUserId) || date < editStartDate || date > editEndDate) {
+                return res.status(401).json({ message: "You are not allowed to edit this file. Either you are not an editor or the edit date has not started or has ended." });
+            }
+
             workbook = await Workbook.findById(workbook._id).populate('sheets');
             let doc = await PackageValue.findOne({groupNumber, package: pack._id, organization: organizations[0]});
             if (!doc)

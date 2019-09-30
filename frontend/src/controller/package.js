@@ -68,11 +68,16 @@ export async function userGetPackage(packageName, org) {
   }
 }
 
-export async function userSaveWorkbook(packageName, organizationName, workbookName, data) {
-  const response = await axios.put(config.server + `/api/v2/packages/${packageName}/${organizationName}/${workbookName}`, data, axiosConfig);
-  if (check(response)) {
-    return response;
-  }
+export function userSaveWorkbook(packageName, organizationName, workbookName, data) {
+  axios.put(config.server + `/api/v2/packages/${packageName}/${organizationName}/${workbookName}`, data, axiosConfig)
+  .then((response) => {
+      if (check(response)) {
+        return response;
+      }
+    })
+    .catch(({ response: { data: { message } } }) => {
+      if(message) console.error(message);
+    });
 }
 
 export async function userSubmitPackage(packageName, organization, {userNotes}) {
