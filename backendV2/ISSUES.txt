@@ -5,3 +5,4 @@ REST API
 Design
 ==========================
 - Database design flaws
+- Admin can only belong to a single group?
