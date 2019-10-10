@@ -99,9 +99,7 @@ const UserSelectedOrg = ({ selectedUserOrg, userOrganizations, handleChange }) =
   } else if(userOrganizations.length === 0) {
     return <p>You don't belong to any organizations</p>;
   } else {
-    const Menu = useMemo(() => (
-      userOrganizations.map((organization) => <MenuItem key={uniqid()} value={organization}>{organization}</MenuItem>
-    )), [ userOrganizations ]);
+    const Menu = userOrganizations.map((organization) => <MenuItem key={uniqid()} value={organization}>{organization}</MenuItem>);
   
     const inputProps = { name: "Organizations" };
     return <Select value={selectedUserOrg} onChange={handleChange} inputProps={inputProps}>{Menu}</Select>
