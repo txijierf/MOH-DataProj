@@ -1,76 +1,132 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
-import {TextField, Paper, Grid, Button, FormControlLabel, Checkbox} from '@material-ui/core';
+import React, { useState, useCallback, useEffect } from 'react';
+
+import { makeStyles } from '@material-ui/core/styles';
+
 import DateFnsUtils from '@date-io/date-fns';
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDateTimePicker
-} from '@material-ui/pickers';
+
+import { TextField, Paper, Grid, Button, FormControlLabel, Checkbox } from '@material-ui/core';
+import { MuiPickersUtilsProvider, KeyboardDateTimePicker } from '@material-ui/pickers';
+
+import { createPackage } from "../../controller/package"
+import { getAllWorkbooksForAdmin } from "../../controller/workbookManager";
+import { getAllUsers } from "../../controller/userManager";
+import { getOrganizationTypes } from "../../controller/system"
+
 import Dropdown from "./components/Dropdown";
-import {getAllWorkbooksForAdmin} from "../../controller/workbookManager";
-import {createPackage} from "../../controller/package"
-import {getOrganizationTypes} from "../../controller/system"
 
 const useStyles = makeStyles(theme => ({
-  container: {
+  containerStyle: {
     display: 'flex',
     flexWrap: 'wrap',
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
-    paddingRight: theme.spacing(4),
+    paddingRight: theme.spacing(4)
   },
-  textField: {
-    // marginLeft: theme.spacing(1),
-    // marginRight: theme.spacing(1),
-    width: 400,
-  },
-
+  textFieldStyle: {
+    width: 400
+  }
 }));
 
-export default function CreatePackage(props) {
-  const classes = useStyles();
-  const [values, setValues] = React.useState({
-    name: '',
-    adminNotes: '',
-    startDate: Date.now(),
-    endDate: new Date(Date.now() + 86400000 * 7),  // one week later
-    workbooks: null,
-    orgTypes: null,
-    originalTypes: null,
-    selectedWorkbooks: [],
-    selectedOrgTypes: [],
-    published: false,
-  });
+
+
+const TimePickerContainer = ({ label, value, handleChange }) => (
+  <Grid item>
+    <KeyboardDateTimePicker margin="normal" label={label} value={value} variant="inline" format="yyyy/MM/dd HH:mm" onChange={handleChange}/>
+  </Grid>
+);
+
+// TODO: Limit bound times later so there's no conflict
+const Deadline = ({ startDate, endDate, handleStartChange, handleEndChange }) => (
+  <MuiPickersUtilsProvider utils={DateFnsUtils}>
+    <TimePickerContainer label="Start Date" value={startDate} handleChange={handleStartChange}/>
+    <TimePickerContainer label="End Date" value={endDate} handleChange={handleEndChange}/>
+  </MuiPickersUtilsProvider>
+);
+
+const WorkflowField = ({ title, options, startDate, endDate, handleOptionChange, handleStartChange, handleEndChange }) => (
+  <div>
+    <Dropdown title={title} options={options} onChange={handleOptionChange}/>
+    <Deadline startDate={startDate} endDate={endDate} handleStartChange={handleStartChange} handleEndChange={handleEndChange}/>
+  </div>
+);
+
+const CreatePackage = ({ showMessage }) => {
+  const { containerStyle, textFieldStyle } = useStyles();
+
+  const [ name, setName ] = useState("");
+  const [ adminNotes, setAdminNotes ] = useState("");
+
+  const [ editStartDate, setEditStartDate ] = useState(Date.now());
+  const [ reviewStartDate, setReviewStartDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ approvalStartDate, setApprovalStartDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ editEndDate, setEditEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ reviewEndDate, setReviewEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+  const [ approvalEndDate, setApprovalEndDate ] = useState(new Date(Date.now() + 86400000 * 7));
+
+  const [ workbooks, setWorkbooks ] = useState(null);
+  const [ orgTypes, setOrgTypes ] = useState(null);
+  const [ originalTypes, setOriginalTypes ] = useState(null);
+  
+  const [ usernames, setUsernames ] = useState(null);
+  
+  const [ editors, setEditors ] = useState([]);
+  const [ reviewers, setReviewers ] = useState([]);
+  const [ approvers, setApprovers ] = useState([]);
+
+  const [ selectedWorkbooks, setSelectedWorkbooks ] = useState([]);
+  const [ selectedOrgTypes, setSelectedOrgTypes ] = useState([]);
+
+  const [ published, setPublished ] = useState(false);
+  const [ dataFetched, setDataFetched ] = useState(false);
+  
+  // Unmounted set state buffer
+  let isSubscribed = true;
+
+  const fetchData = async () => {
+    try {
+      const workbooksData = await getAllWorkbooksForAdmin();
+      
+      const organizationTypesData = await getOrganizationTypes();
+      
+      const usernamesData = await getAllUsers();
+      
+      const usernames = usernamesData.map(({ _id, username, firstName, lastName }) => [ _id, `${firstName} ${lastName} (${username})` ]);
+      const workbooks = workbooksData.map(({ _id, name }) => [ _id, name ]);
+      const orgTypes = organizationTypesData.map(({ _id, name }) => [ _id, name ]);
+      
+      if(isSubscribed) {
+        setWorkbooks(workbooks);
+        setOrgTypes(orgTypes);
+        setOriginalTypes(organizationTypesData);
+        setUsernames(usernames);
+        setDataFetched(true);
+      }
+    } catch(error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    getAllWorkbooksForAdmin()
-      .then(data => {
-        const workbooks = [];
-        data.forEach(workbook => workbooks.push([workbook._id, workbook.name]));
-        setValues(values => ({...values, workbooks}))
-      });
-    getOrganizationTypes()
-      .then(data => {
-        const types = [];
-        data.forEach(type => types.push([type._id, type.name]));
-        setValues(values => ({...values, orgTypes: types, originalTypes: data}))
-      });
-  }, []);
+    if(isSubscribed && !dataFetched) fetchData(setWorkbooks, setOrgTypes, setOriginalTypes, setUsernames, setDataFetched);
+    return () => isSubscribed = false;
+  });
 
-  const handleChange = useCallback((name, value) => {
-    setValues(values => ({...values, [name]: value}));
-  }, []);
+  const handleChangeAdminNotes = ({ target: { value } }) => setAdminNotes(value);
+  const handleChangeName = ({ target: { value } }) => setName(value);
+  const handleChangePublished = ({ target: { checked } }) => setPublished(checked);
 
-  const handleChangeEvent = name => e => handleChange(name, e.target.value);
-
-  const handleChangeDate = useCallback(name => date => {
-    setValues(values => ({...values, [name]: date}));
-  }, []);
+  // Event change functions for the date picker contains multiple argument, which causes issues with useState's setState. Only use the first argument, which is the date value.
+  const handleEditStartDate = (date) => setEditStartDate(date);
+  const handleEditEndDate = (date) => setEditEndDate(date);
+  const handleReviewStartDate = (date) => setReviewStartDate(date);
+  const handleReviewEndDate = (date) => setReviewEndDate(date);
+  const handleApprovalStartDate = (date) => setApprovalStartDate(date);
+  const handleApprovalEndDate = (date) => setApprovalEndDate(date);
 
   const handleSave = useCallback(async () => {
-    const orgIds = new Set();
-    for (const selectedTypeId of values.selectedOrgTypes) {
-      for (const type of values.originalTypes) {
+    let orgIds = new Set();
+    for (const selectedTypeId of selectedOrgTypes) {
+      for (const type of originalTypes) {
         if (type._id === selectedTypeId) {
           for (const org of type.organizations) {
             orgIds.add(org._id);
@@ -78,89 +134,33 @@ export default function CreatePackage(props) {
         }
       }
     }
+    orgIds = [ ...orgIds ]
+    const workbookIds = selectedWorkbooks;
+    const organizationTypes = selectedOrgTypes;
+
     try {
-      const data = await createPackage({
-        name: values.name,
-        startDate: values.startDate,
-        endDate: values.endDate,
-        workbookIds: values.selectedWorkbooks,
-        organizationTypes: values.selectedOrgTypes,
-        orgIds: [...orgIds],
-        adminNotes: values.adminNotes,
-        published: values.published,
-      });
-      props.showMessage(data.message, 'success')
+      const data = await createPackage({ name, workbookIds, organizationTypes, editors, reviewers, approvers, orgIds, adminNotes, published, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate });
+      showMessage(data.message, 'success');
     } catch (e) {
-      props.showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error')
+      showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error');
     }
+  }, [ name, selectedWorkbooks, selectedOrgTypes, editors, reviewers, approvers, adminNotes, published, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate ]);
 
-  }, [values, props]);
-
-  const renderDates = useMemo(() => (<MuiPickersUtilsProvider utils={DateFnsUtils}>
-    <Grid container justify={"flex-start"} spacing={4}>
-      <Grid item>
-        <KeyboardDateTimePicker
-          margin="normal"
-          label="Start Date"
-          value={values.startDate}
-          variant="inline"
-          format="yyyy/MM/dd HH:mm"
-          onChange={handleChangeDate('startDate')}
-        />
-      </Grid>
-      <Grid item>
-        <KeyboardDateTimePicker
-          margin="normal"
-          label="End Date"
-          value={values.endDate}
-          variant="inline"
-          format="yyyy/MM/dd HH:mm"
-          onChange={handleChangeDate('endDate')}
-        />
-      </Grid>
-    </Grid>
-  </MuiPickersUtilsProvider>), [handleChangeDate, values.startDate, values.endDate]);
-
-  const renderDropdown = useMemo(() => (
-    <>
-      <Dropdown title="Organization Types" options={values.orgTypes}
-                onChange={data => handleChange('selectedOrgTypes', data)}/>
-      <Dropdown title="Workbooks" options={values.workbooks}
-                onChange={data => handleChange('selectedWorkbooks', data)}/>
-    </>
-  ), [values.orgTypes, values.workbooks, handleChange]);
+  const publishCheckbox = <Checkbox checked={published} color="primary" onChange={handleChangePublished}/>
 
   return (
-    <Paper className={classes.container}>
-      <TextField
-        label="Package Name"
-        className={classes.textField}
-        value={values.name}
-        onChange={handleChangeEvent('name')}
-        margin="normal"
-        autoFocus
-        required
-      />
-      <TextField
-        label="Admin Notes"
-        value={values.adminNotes}
-        onChange={handleChangeEvent('adminNotes')}
-        multiline
-        margin="normal"
-        fullWidth
-      />
-      {renderDates}
-      {renderDropdown}
-      <FormControlLabel style={{width: '100%'}}
-                        control={
-                          <Checkbox checked={values.published} color="primary"
-                                    onChange={e => handleChange('published', e.target.checked)}/>
-                        }
-                        label="Publish"
-      />
-      <Button onClick={handleSave} color="primary" variant="contained">
-        Save
-      </Button>
+    <Paper className={containerStyle}>
+      <TextField label="Package Name" className={textFieldStyle} value={name} onChange={handleChangeName} margin="normal" autoFocus required/>
+      <TextField label="Admin Notes" value={adminNotes} onChange={handleChangeAdminNotes} multiline margin="normal" fullWidth/>
+      <WorkflowField title="Editors" options={usernames} startDate={editStartDate} endDate={editEndDate} handleOptionChange={setEditors} handleStartChange={handleEditStartDate} handleEndChange={handleEditEndDate}/>
+      <WorkflowField title="Reviewers" options={usernames} startDate={reviewStartDate} endDate={reviewEndDate} handleOptionChange={setReviewers} handleStartChange={handleReviewStartDate} handleEndChange={handleReviewEndDate}/>
+      <WorkflowField title="Approvers" options={usernames} startDate={approvalStartDate} endDate={approvalEndDate} handleOptionChange={setApprovers} handleStartChange={handleApprovalStartDate} handleEndChange={handleApprovalEndDate}/>
+      <Dropdown title="Organization Types" options={orgTypes} onChange={setSelectedOrgTypes}/>
+      <Dropdown title="Workbooks" options={workbooks} onChange={setSelectedWorkbooks}/>
+      <FormControlLabel style={{width: '100%'}} control={publishCheckbox} label="Publish"/>
+      <Button onClick={handleSave} color="primary" variant="contained">Save</Button>
     </Paper>
   );
 }
+
+export default CreatePackage;

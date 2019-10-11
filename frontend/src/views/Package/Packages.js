@@ -1,192 +1,245 @@
-import React, {useEffect, useMemo} from 'react';
-import {makeStyles} from '@material-ui/core/styles';
-import {
-  Paper, Grid, Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Fade, Select, MenuItem
-} from '@material-ui/core';
-import {
-  adminGetPackages, userGetPackages, adminDeletePackage
-} from "../../controller/package";
-import {getCurrentUserOrganizations} from '../../controller/userManager';
+import React, { useState, useEffect, useMemo } from 'react';
+
+import { adminGetPackages, userGetPackages, adminDeletePackage } from "../../controller/package";
+import { getCurrentUserOrganizations } from '../../controller/userManager';
+
+import { makeStyles } from '@material-ui/core/styles';
+import { Paper, Grid, Button, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Fade, Select, MenuItem } from '@material-ui/core';
 import PackageCard from './components/Card';
 import Loading from "../components/Loading";
 import PackagePicker from "./components/Picker";
 
-const useStyles = makeStyles(theme => ({
-  container: {
+import uniqid from "uniqid";
+
+const useStyles = makeStyles((theme) => ({
+  containerStyle: {
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
     paddingRight: theme.spacing(4),
-  },
+  }
 }));
 
-export default function CreatePackage(props) {
-  const {params} = props;
+/**
+ * Precondition: approval status is not rejected or approved.
+ * Determines the phase of the workflow based on the start and end Date of each phase.
+ */
+const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate) => {
+  const currentDate = Date.now();
+  let phase;
+
+  if(currentDate < editStartDate) {
+    phase = "Pre-edit";
+  } else if(currentDate < editEndDate) {
+    phase = "Edit";
+  } else if(currentDate < reviewStartDate) {
+    phase = "Pre-review";
+  } else if(currentDate < reviewEndDate) {
+    phase = "Review";
+  } else if(currentDate < approvalStartDate) {
+    phase = "Pre-approval";
+  } else if(currentDate < approvalEndDate) {
+    phase = "Approval";
+  } else {
+    phase = "Post-approval";
+  };
+
+  return phase;
+};
+
+const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenFile }) => {
+  let badges = [ { text: published ? "Published" : "Unpublished", color: published ? "success": "secondary" } ];
+
+  if(published) {
+    let phase = approveStatus !== "Approved" || approveStatus !== "Rejected" 
+      ? computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
+      : "Completed";
+
+    badges.push({ text: phase, color: phase === "Completed" ? "success": "secondary" });  
+    
+    if(approveStatus !== "TBD") {
+      badges.push({ text: `Decision: ${approveStatus}`, color: approveStatus === "Approved" ? "success" : "danger" });
+    }
+  };
+
+  return (
+    <Grid key={uniqid()} item>
+      <PackageCard type="package" badges={badges} fileName={fileName} handleOpenDeleteDialog={handleOpenDeleteDialog} handleOpenFile={handleOpenFile}/>
+    </Grid>
+  );
+};
+
+const DialogConfirmationMessage = ({ selectedName }) => (
+  <DialogContent>
+    <DialogContentText>
+      Are you sure you want to delete <strong>{selectedName}</strong>? 
+      <br/>
+      This process cannot be undone.
+    </DialogContentText>
+  </DialogContent>
+);
+
+const DialogButtons = ({ handleCloseDialog, handleConfirmDelete }) => (
+  <DialogActions>
+    <Button onClick={handleCloseDialog} color="primary">Cancel</Button>
+    <Button onClick={handleConfirmDelete} color="primary">Delete</Button>
+  </DialogActions>
+);
+
+const DialogWindow = ({ open, selectedName, handleCloseDialog, handleConfirmDelete }) => (
+  <Dialog open={open} keepMounted onClose={handleCloseDialog} >
+    <DialogTitle>Confirm delete?</DialogTitle>
+    <DialogConfirmationMessage selectedName={selectedName}/>
+    <DialogButtons handleConfirmDelete={handleConfirmDelete} handleCloseDialog={handleCloseDialog}/>
+  </Dialog>
+);
+
+const UserSelectedOrg = ({ selectedUserOrg, userOrganizations, handleChange }) => {
+  if(selectedUserOrg === "") {
+    return <Loading message="Loading your organizations..."/>;  
+  } else if(userOrganizations.length === 0) {
+    return <p>You don't belong to any organizations</p>;
+  } else {
+    const Menu = userOrganizations.map((organization) => <MenuItem key={uniqid()} value={organization}>{organization}</MenuItem>);
+  
+    const inputProps = { name: "Organizations" };
+    return <Select value={selectedUserOrg} onChange={handleChange} inputProps={inputProps}>{Menu}</Select>
+  }
+};
+
+const CreatePackage = ({ showMessage, history, params }) => {
   const isAdmin = params.mode === "admin";
-  const classes = useStyles();
-  const [values, setValues] = React.useState({
-    packages: null,
-    dialog: false,
-    picker: null,
-    selectedName: null,
-    organizations: [], // organizations in the picker
-    pickedPackage: null,
-    userOrganizations: [], // organizations for the current user
-    selectedUserOrg: '',
+
+  const { containerStyle } = useStyles();
+
+  const [ packages, setPackages ] = useState([]);
+  const [ openDialog, setOpenDialog ] = useState(false);
+  const [ picker, setPicker ] = useState(null);
+  const [ selectedName, setSelectedName ] = useState(null);
+  const [ organizations, setOrganizations ] = useState([]);
+  const [ pickedPackage, setPickedPackage ] = useState(null);
+  const [ userOrganizations, setUserOrganizations ] = useState([]);
+  const [ selectedUserOrg, setSelectedUserOrg ] = useState("");
+
+  // Unmount async condition - acts as a buffer to prevent set state on unmounted component
+  let isSubscribed = true;
+
+  const fetchAndPopulateAdminValues = () => adminGetPackages().then((adminPackages) => {
+    if(isSubscribed) setPackages(adminPackages);
   });
 
+  const fetchAndPopulateUserValues = async () => {
+    const userOrganizations = await getCurrentUserOrganizations();
+    const selectedUserOrg = userOrganizations[0];
+    const userPackages = await userGetPackages(selectedUserOrg);
+
+    if(isSubscribed) {
+      setUserOrganizations(userOrganizations);
+      setSelectedUserOrg(selectedUserOrg);
+      setPackages(userPackages);
+    }
+  };
+
   useEffect(() => {
-    if (isAdmin) {
-      adminGetPackages().then(packages => setValues(values => ({...values, packages})));
-    } else if (!isAdmin) {
-      getCurrentUserOrganizations().then(organizations => {
-          setValues(values => ({
-            ...values,
-            userOrganizations: organizations,
-            selectedUserOrg: organizations[0]
-          }));
-          userGetPackages(organizations[0]).then(packages => setValues(values => ({...values, packages})));
-        }
-      );
+    isAdmin
+      ? fetchAndPopulateAdminValues()
+      : fetchAndPopulateUserValues();
 
-    }
-  }, [isAdmin]);
-
-  const allPackages = () => {
-    const list = [];
-    const {packages} = values;
-    if (packages == null) return <Loading message="Loading Packages..."/>;
-    for (let i = 0; i < packages.length; i++) {
-      const name = packages[i].name;
-      list.push(
-        <Grid key={i} item>
-          <PackageCard type="package" fileName={name} deleteCb={isAdmin ? openDialog : undefined}
-                       onOpen={onOpen} openParams={[packages[i]]}
-          />
-        </Grid>
-      )
-    }
-    return list;
-  };
-
-  const onOpen = (name, pack) => e => {
-    if (isAdmin) {
-      // props.history.push('/admin/packages/' + name);
-      openPicker(pack, e.target);
-    } else
-      props.history.push('/packages/' + name + '/' + values.selectedUserOrg);
-  };
-
-  const closeDialog = () => setValues(values => ({...values, dialog: false, selectedName: null}));
-  const closePicker = () => setValues(values => ({...values, picker: null}));
-  const openDialog = name => setValues(values => ({...values, dialog: true, selectedName: name}));
-
-  const openPicker = (pack, anchorEl) => {
-    const organizations = pack.organizations.map(org => org.name);
-    if (organizations.length === 0) {
-      console.log('No organizations');
-    } else if (organizations.length === 1) {
-      props.history.push('/admin/packages/view/' + pack.name + '/org/' + organizations[0]);
+    return () => isSubscribed = false;
+  }, [ isAdmin ]);
+  
+  const handleOpenPicker = (pickedPackage, anchorEl) => {
+    const organizations = pickedPackage.organizations.map(({ name }) => name);
+    if(!organizations.length) {
+      console.log("No organizations");
+    } else if(organizations.length === 1) {
+      history.push('/admin/packages/view/' + pickedPackage.name + '/org/' + organizations[0]);
     } else {
-      setValues(values => ({...values, organizations, picker: anchorEl, pickedPackage: pack}))
+      setPicker(anchorEl);
+      setOrganizations(organizations);
+      setPickedPackage(pickedPackage);
     }
   };
 
+  const handleClosePicker = () => {
+    if(picker !== null) setPicker(null);
+  };
+  
+  const handleCloseDialog = () => {
+    if(openDialog) setOpenDialog(false);
+  };
+  
   const handleConfirmDelete = () => {
-    const name = values.selectedName;
-    if (isAdmin) {
-      adminDeletePackage(name).then(res => {
-        closeDialog();
-        setValues(values => ({...values, packages: values.packages.filter(p => p.name !== name)}));
-        props.showMessage(res.message, 'success');
-      }).catch(e => props.showMessage(e.toString() + '\nDetails: ' + e.response.data.message, 'error'));
-
+    if(isAdmin) {
+      adminDeletePackage(selectedName)
+      .then(({ message }) => {
+          handleCloseDialog();
+          setPackages(packages.filter(({ name }) => selectedName !== name));
+          showMessage(message, "success");
+        })
+        .catch((error) => showMessage(`${error.toString()} \nDetails: ${error.response.data.message} error`));
     }
   };
 
-  const dialog = () => {
-    return (
-      <Dialog
-        open={values.dialog}
-        keepMounted
-        onClose={closeDialog}
-      >
-        <DialogTitle>
-          {"Confirm delete ?"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete <strong>{values.selectedName}</strong>? <br/>
-            This process cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="primary">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
+  const handlePickedPackage = (organization) => history.push('/admin/packages/view/' + pickedPackage.name + '/org/' + organization);
+  
+  const handleChangeUserOrg = ({ target: { value } }) => {
+    userGetPackages(value)
+      .then((packages) => {
+        setSelectedUserOrg(value);
+        setPackages(packages);
+      });
   };
+        
+  const AllPackages = useMemo(() => (
+    packages.map((_package) => {
+      const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, name } = _package;
 
-  const handlePick = (org) => {
-    props.history.push('/admin/packages/view/' + values.pickedPackage.name + '/org/' + org);
-  };
+      const handleOpenFile = ({ target }) => {
+        isAdmin
+          ? handleOpenPicker(_package, target)
+          : history.push('/packages/' + name + '/' + selectedUserOrg)
+      };
 
-  const menu = useMemo(() => {
-    const items = [];
-    for (const org of values.userOrganizations) {
-      items.push(<MenuItem key={org} value={org}>{org}</MenuItem>)
+      const handleOpenDeleteDialog = () => {
+        if(!openDialog) setOpenDialog(true);
+        if(selectedName !== name) setSelectedName(name);
+      };
+    
+      return (
+        <Package 
+          key={uniqid()}
+          fileName={name} 
+          published={published} 
+          approveStatus={approveStatus}
+          editStartDate={editStartDate}
+          editEndDate={editEndDate}
+          reviewStartDate={reviewStartDate}
+          reviewEndDate={reviewEndDate}
+          approvalStartDate={approvalStartDate} 
+          approvalEndDate={approvalEndDate}
+          approveStatus={approveStatus} 
+          handleOpenDeleteDialog={isAdmin && handleOpenDeleteDialog} 
+          handleOpenFile={handleOpenFile}
+        />
+      );
     }
-    return items;
-  }, [values.userOrganizations]);
-
-  const handleChangeUserOrg = e => {
-    const value = e.target.value;
-    setValues(values => ({...values, selectedUserOrg: value}));
-    userGetPackages(value).then(packages => setValues(values => ({...values, packages})));
-  };
-
-  const renderSelectOrg = useMemo(() => {
-    if (values.selectedUserOrg === '') return <Loading message="Loading your organizations..."/>;
-    if (menu.length === 0) return 'You don\'t belong to any organizations.';
-    return (
-      <Select
-        value={values.selectedUserOrg}
-        onChange={handleChangeUserOrg}
-        inputProps={{
-          name: 'Organization',
-        }}
-      >
-        {menu}
-      </Select>
-    )
-  }, [values.selectedUserOrg, menu]);
+  )), [ packages ]);  
 
   return (
     <Fade in>
-      <Paper className={classes.container}>
+      <Paper className={containerStyle}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              All Packages
-            </Typography>
-            {isAdmin ? null : renderSelectOrg}
+            <Typography variant="h6" gutterBottom>All Packages</Typography>
+            {!isAdmin && <UserSelectedOrg selectedUserOrg={selectedUserOrg} userOrganizations={userOrganizations} handleChange={handleChangeUserOrg}/>}
           </Grid>
-          {allPackages()}
+          {AllPackages}
         </Grid>
-        <br/>
-        {dialog()}
-        <PackagePicker
-          anchorEl={values.picker}
-          onClose={closePicker}
-          onSelect={handlePick}
-          options={values.organizations}
-          title={'Pick an organization'}
-        />
+        <DialogWindow open={openDialog} selectedName={selectedName} handleCloseDialog={handleCloseDialog} handleConfirmDelete={handleConfirmDelete}/>
+        <PackagePicker title="Pick an organization" anchorEl={picker} onClose={handleClosePicker} onSelect={handlePickedPackage} options={organizations}/>
       </Paper>
-    </Fade>)
-}
+    </Fade>
+  );
+};
+
+export default CreatePackage;

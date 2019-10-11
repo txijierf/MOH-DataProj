@@ -1,0 +1,45 @@
+.sheet {
+  min-height: calc(100vh - 300.78px);
+}
+
+.cell {
+  position: absolute;
+  border-right: 1px solid #CCCCCC;
+  border-bottom: 1px solid #CCCCCC;
+  line-height: normal;
+  text-align: left;
+  white-space: pre;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+
+  &__input {
+    position: relative;
+    min-width: fit-content;
+    width: 10px;
+  }
+
+  &:hover {
+    cursor: default;
+  }
+
+  &:focus {
+    z-index: 1;
+    min-width: fit-content;
+    background-color: white;
+  }
+
+  &__editable {
+    -webkit-box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+    -moz-box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+    box-shadow: 0px 2px 5px 1px rgba(105,105,105,1);
+  }
+
+  &__uneditable {
+    user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+  }
+}

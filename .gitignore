@@ -1,9 +1,5 @@
-public/dist/workbooks.js.map
-public/dist/
 node_modules/
-.idea/
-build/
-.vs/
-.vscode/
 mochawesome-report/
-frontend/dist/
+dist/
+build/
+Data-Project-Config/

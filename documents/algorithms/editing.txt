@@ -1,0 +1,6 @@
+Refactor the data array if it contains empty or null data cells to the form:
+[{ start, end, data }],
+
+How would formula parser work?
+The parser can contain values from any cells
+{ row: { column: { data }} }

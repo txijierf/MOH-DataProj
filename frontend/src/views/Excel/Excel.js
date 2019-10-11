@@ -54,8 +54,16 @@ class Excel extends Component {
       setIdCell: null,
       editorCell: null,
       fileName: 'Untitled workbook',
+      openSetPermit: null,
       contextMenu: null,
+      dataFetched: false,
+      attOptions: [],
+      catOptions: []
     };
+
+    //set permit dialog
+    this.permitOptions = [];
+
     this.initialFileName = 'Untitled workbook'; // uploaded file name
     this.excelManager = new ExcelManager(props);
     this.attCatManager = new AttCatManager(props);
@@ -66,8 +74,8 @@ class Excel extends Component {
     this.editorRef = React.createRef();
 
     // set ID dialog
-    this.attOptions = [];
-    this.catOptions = [];
+    // this.attOptions = [];
+    // this.catOptions = [];
 
     //set permit dialog
     this.permitOptions = [];
@@ -88,6 +96,10 @@ class Excel extends Component {
       'div1': null,
       'Copy \t\t\t Ctrl+C': () => {
         this.setState({contextMenu: null})
+      },
+      'Set User Permit': (anchorEl) => {
+        console.log('Set User Permit');
+        this.setPermission(anchorEl);
       },
       'Paste \t\t\t Ctrl+V': async () => {
         const result = await navigator.permissions.query({name: "clipboard-read"});
@@ -160,6 +172,23 @@ class Excel extends Component {
     if (sheetNo === undefined) console.error('getCell: sheetNo should be provides.');
     return this.workbook.sheet(sheetNo).getCell(row + 1, col + 1);
   }
+
+  setPermit(sheetNo, row, col, permit) {
+    sheetNo = sheetNo == null ? this.currentSheetIdx : sheetNo;
+    const sheet = this.workbook.sheet(sheetNo);
+    const cell = sheet.getCell(row + 1, col + 1);
+    let updates;
+
+    updates = cell.setCellPermit(permit);
+    console.log(`Updated ${updates.length + 1} cells.`);
+    return true;
+  };
+
+  setPermission = (anchorEl) => {
+    const cell = this.selected;
+    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
+  }
+
 
   /**
    * Update a cell's data without render it.
@@ -388,12 +417,22 @@ class Excel extends Component {
     this.setState({contextMenu: {selections, top: e.clientY, left: e.clientX, anchorEl: e.target}})
   };
 
+  fetchData = async () => {
+    const catOptions = await this.attCatManager.get(true);
+    const attOptions = await this.attCatManager.get(false);
+
+    // console.log("options", catOptions, attOptions);
+
+    this.setState({ catOptions, attOptions, dataFetched: true }, ()=>console.log(this.state));
+  };
+
   componentDidMount() {
     const sheetWidth = this.sheetContainerRef.current.offsetWidth;
     const sheetHeight = this.sheetContainerRef.current.offsetHeight;
 
-    this.attCatManager.get(true).then(atts => this.attOptions = atts);
-    this.attCatManager.get(false).then(cats => this.catOptions = cats);
+    if(!this.state.dataFetched) this.fetchData();
+    // this.attCatManager.get(true).then(atts => this.attOptions = atts);
+    // this.attCatManager.get(false).then(cats => this.catOptions = cats);
 
     if (this.mode === 'admin create') {
       // create local workbook storage
@@ -474,8 +513,11 @@ class Excel extends Component {
       || this.state.openDropdown !== nextState.openDropdown
       || this.state.fileName !== nextState.fileName
       || this.state.openDataValidationDialog !== nextState.openDataValidationDialog
+      || this.state.openSetPermit !== nextState.openSetPermit
       || this.state.openEditor !== nextState.openEditor
       || this.state.contextMenu !== nextState.contextMenu
+      || this.state.catOptions !== nextState.catOptions
+      || this.state.attOptions !== nextState.attOptions
   }
 
   componentWillUnmount() {
@@ -550,8 +592,8 @@ class Excel extends Component {
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}
-            catOptions={this.catOptions}
-            attOptions={this.attOptions}
+            catOptions={this.state.catOptions}
+            attOptions={this.state.attOptions}
             handleSetId={this.handleSetId}
             handleClose={this.handleCloseSetId}
           />

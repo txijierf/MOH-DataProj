@@ -17,6 +17,36 @@ import {
 import {Link} from "react-router-dom";
 
 
+const LinkButton = ({ text, to }) => (
+  <Link to={to}>
+    <Button color="link"><span>{text}</span></Button>
+  </Link>
+);
+
+const EmailLogo = () => (
+  <InputGroupAddon addonType="prepend">
+    <InputGroupText>@</InputGroupText>
+  </InputGroupAddon>
+);
+
+const EmailInput = ({ email, handleChange }) => (
+  <InputGroup className="mb-3">
+    <EmailLogo/>
+    <Input type="email" id="email" placeholder="Email" autoComplete="email" value={email} onChange={handleChange}/>
+  </InputGroup>
+);
+
+const ForgetPasswordForm = ({ email, message, handleSubmit, handleChange, isDisabled }) => (
+  <Form onSubmit={handleSubmit}>
+    <h1>Reset Password</h1>
+    <p className="text-muted">Enter your email:</p>
+    <EmailInput email={email} handleChange={handleChange}/>
+    <FormText color="muted">{message}</FormText>
+    <br/>
+    <Button color="success" disabled={isDisabled} block>Send Reset Email</Button>
+  </Form>
+);
+
 class ForgetPassword extends Component {
 
   constructor(props) {
@@ -51,6 +81,9 @@ class ForgetPassword extends Component {
   };
 
   render() {
+    const isDisabled = !this.validateForm();
+    const { email, message } = this.state;
+
     return (
       <div className="app flex-row align-items-center">
         <Container>
@@ -58,31 +91,11 @@ class ForgetPassword extends Component {
             <Col md="9" lg="7" xl="6">
               <Card className="mx-4">
                 <CardBody className="p-4">
-                  <Form onSubmit={this.handleSubmit}>
-                    <h1>Reset Password</h1>
-                    <p className="text-muted">Enter your email:</p>
-                    <InputGroup className="mb-3">
-                      <InputGroupAddon addonType="prepend">
-                        <InputGroupText>@</InputGroupText>
-                      </InputGroupAddon>
-                      <Input type="email" id="email" placeholder="Email" autoComplete="email"
-                             value={this.state.email} onChange={this.handleChange}/>
-                    </InputGroup>
-
-                    <FormText color="muted">
-                      {this.state.message}
-                    </FormText>
-                    <br/>
-                    <Button color="success" disabled={!this.validateForm()} block>Send Reset Email</Button>
-                  </Form>
+                  <ForgetPasswordForm email={email} message={message} isDisabled={isDisabled} handleChange={this.handleChange} handleSubmit={this.handleSubmit} />
                   <br/>
-                  <Link to="/login">
-                    <Button color="link"><span>Ready to log in?</span></Button>
-                  </Link>
+                  <LinkButton to="/login" text="Ready to log in?"/>
                   <br/>
-                  <Link to="/register">
-                    <Button color="link"><span>Register a new account?</span></Button>
-                  </Link>
+                  <LinkButton to="/register" text="Register a new account?"/>
                 </CardBody>
               </Card>
             </Col>

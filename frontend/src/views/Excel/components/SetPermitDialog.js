@@ -228,4 +228,8 @@ SetPermitDialog.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
+<<<<<<< HEAD
 export default withStyles(styles, {withTheme: true})(SetPermitDialog);
+=======
+export default withStyles(styles, {withTheme: true})(SetPermitDialog);
+>>>>>>> cleanup

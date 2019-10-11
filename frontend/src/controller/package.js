@@ -12,16 +12,8 @@ import {check, axiosConfig} from "./common";
  * @param published
  * @return {Promise}
  */
-export async function createPackage({name, orgIds, workbookIds, startDate, endDate, adminNotes, published}) {
-  const response = await axios.post(config.server + '/api/v2/admin/packages', {
-    name,
-    orgIds,
-    workbookIds,
-    startDate,
-    endDate,
-    adminNotes,
-    published
-  }, axiosConfig);
+export async function createPackage(packageData) {
+  const response = await axios.post(config.server + '/api/v2/admin/packages', packageData, axiosConfig);
   if (check(response)) {
     return response.data;
   }
@@ -76,11 +68,16 @@ export async function userGetPackage(packageName, org) {
   }
 }
 
-export async function userSaveWorkbook(packageName, organizationName, workbookName, data) {
-  const response = await axios.put(config.server + `/api/v2/packages/${packageName}/${organizationName}/${workbookName}`, data, axiosConfig);
-  if (check(response)) {
-    return response;
-  }
+export function userSaveWorkbook(packageName, organizationName, workbookName, data) {
+  axios.put(config.server + `/api/v2/packages/${packageName}/${organizationName}/${workbookName}`, data, axiosConfig)
+  .then((response) => {
+      if (check(response)) {
+        return response;
+      }
+    })
+    .catch(({ response: { data: { message } } }) => {
+      if(message) console.error(message);
+    });
 }
 
 export async function userSubmitPackage(packageName, organization, {userNotes}) {

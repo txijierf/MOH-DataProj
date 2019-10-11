@@ -11,6 +11,7 @@ const Workbooks = React.lazy(() => import('./views/Workbooks/Workbooks' /* webpa
 
 const AttCat = React.lazy(() => import('./views/AttCat/AttCat' /* webpackChunkName: "attCat" */));
 const AttCatGroup = React.lazy(() => import('./views/AttCat/Group' /* webpackChunkName: "attCatGroup" */));
+// const Excel = React.lazy(() => import('./views/ExcelV2'/* webpackChunkName: "excel" */));
 const Excel = React.lazy(() => import('./views/Excel/Excel'/* webpackChunkName: "excel" */));
 
 const SystemInfo = React.lazy(() => import('./views/System' /* webpackChunkName: "systemInfo" */));
