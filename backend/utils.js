@@ -7,6 +7,11 @@ import mongoose from "mongoose";
 
 import { testDatabase as DATABASE_NAME_TEST, database as DATABASE_NAME } from "./config/config";
 
+import userModel from "./models/user";
+
+import groupModel from "./models/group";
+import organizationModel from "./models/organization/organization";
+
 /**
  * Mongoose and MongoDB set up.
  * 
@@ -19,12 +24,48 @@ import { testDatabase as DATABASE_NAME_TEST, database as DATABASE_NAME } from ".
  */
 const _setupMongoose = async (options) => {
   // default options - overwrite defaults when specified.
-  options = { createDatabase: true, wipeDatabase: false, createDummyUser: false, ...options };
+  options = { createDatabase: true, wipeDatabase: false, createDummyData: false, ...options };
 
   //  TODO
   // Creates the collections of the database
-  const _createDatabase = () => {};
-  const _createDummyData = () => {};
+  const _createDatabase = async () => {
+    try {
+      await userModel.createCollection();
+    } catch(error) {
+      console.log(error);
+    }
+  };
+  const _createDummyData = async () => {
+    console.log("MongoDB: Creating dummy data");
+    try {
+      // Create user
+      const adminPermissions = [ "CRUD-workbook-template", "create-delete-attribute-category", "user-management", "system-management", "workbook-query", "package-management" ];
+  
+      const Linda = { username: "linda", email: "linda@ontario.ca", organization: "sampleOrg", validated: true, active: true, groupNumber: 1, permissions: adminPermissions };
+  
+      let user = await userModel.findOne({ username: "linda" });
+  
+      if(!user) {
+        user = await userModel.register(Linda, "password123");
+      }
+  
+      // Create group and organization
+      const orgDup = await organizationModel.findOne({ groupNumber: 1, name: "sampleOrg" });
+      const groupDup = await groupModel.findOne({ groupNumber: 1, name: "First group" });
+      
+      if(!orgDup) {
+        await organizationModel.create({ users: [ user._id ], managers: [ user._id ], name: "sampleOrg", groupNumber: 1 });
+      }
+      
+      if(!groupDup) {
+        await groupModel.create({ groupNumber: 1, name: "First group" });
+      }
+      
+      console.log("MongoDB: Successfully created dummy data");
+    } catch(error) {
+      console.log("ERROR", error);
+    }
+  };
   
 
   // Drops the collection of a database
@@ -44,7 +85,7 @@ const _setupMongoose = async (options) => {
     try {
       console.log("MongoDB: Setting up database");
 
-      const databaseEnv = process.env.NODE_ENV === 'test' ? DATABASE_NAME_TEST : DATABASE_NAME;
+      const databaseEnv = process.env.NODE_ENV === "test" ? DATABASE_NAME_TEST : DATABASE_NAME;
       await mongoose.connect(databaseEnv, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true, useCreateIndex: true, });
 
       // Options
@@ -62,12 +103,12 @@ const _setupMongoose = async (options) => {
 };
 
 // PERMISSIONS
-// 'CRUD-workbook-template',
-// 'create-delete-attribute-category',
-// 'user-management',
-// 'system-management',
-// 'workbook-query',
-// 'package-management'
+// "CRUD-workbook-template",
+// "create-delete-attribute-category",
+// "user-management",
+// "system-management",
+// "workbook-query",
+// "package-management"
 
 export const setupDatabases = async (options) => {
   try {

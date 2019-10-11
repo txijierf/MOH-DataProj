@@ -43,7 +43,7 @@
     "tinycolor2": "^1.4.1",
     "uniqid": "^5.0.3",
     "workerpool": "https://github.com/josdejong/workerpool.git",
-    "xlsx-populate": "https://github.com/greylemon/xlsx-populate"
+    "xlsx-populate": "https://github.com/greylemon/xlsx-populate#Haonan"
   },
   "devDependencies": {
     "@babel/core": "^7.4.4",

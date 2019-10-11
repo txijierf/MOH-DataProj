@@ -16,6 +16,7 @@ import ExcelToolBarUser from './components/ExcelToolBarUser';
 import ExcelBottomBar from './components/ExcelBottomBar';
 import FormulaBar from "./components/FormulaBar";
 import SetIdDialog from "./components/SetIdDialog";
+import SetPermitDialog from "./components/SetPermitDialog";
 import Dropdown from './components/Dropdown';
 import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
@@ -47,11 +48,16 @@ class Excel extends Component {
       setIdCell: null,
       editorCell: null,
       fileName: 'Untitled workbook',
+      openSetPermit: null,
       contextMenu: null,
       dataFetched: false,
       attOptions: [],
       catOptions: []
     };
+
+    //set permit dialog
+    this.permitOptions = [];
+
     this.initialFileName = 'Untitled workbook'; // uploaded file name
     this.excelManager = new ExcelManager(props);
     this.attCatManager = new AttCatManager(props);
@@ -77,6 +83,10 @@ class Excel extends Component {
       'div1': null,
       'Copy \t\t\t Ctrl+C': () => {
         this.setState({contextMenu: null})
+      },
+      'Set User Permit': (anchorEl) => {
+        console.log('Set User Permit');
+        this.setPermission(anchorEl);
       },
       'Paste \t\t\t Ctrl+V': async () => {
         const result = await navigator.permissions.query({name: "clipboard-read"});
@@ -149,6 +159,23 @@ class Excel extends Component {
     if (sheetNo === undefined) console.error('getCell: sheetNo should be provides.');
     return this.workbook.sheet(sheetNo).getCell(row + 1, col + 1);
   }
+
+  setPermit(sheetNo, row, col, permit) {
+    sheetNo = sheetNo == null ? this.currentSheetIdx : sheetNo;
+    const sheet = this.workbook.sheet(sheetNo);
+    const cell = sheet.getCell(row + 1, col + 1);
+    let updates;
+
+    updates = cell.setCellPermit(permit);
+    console.log(`Updated ${updates.length + 1} cells.`);
+    return true;
+  };
+
+  setPermission = (anchorEl) => {
+    const cell = this.selected;
+    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
+  }
+
 
   /**
    * Update a cell's data without render it.
@@ -224,6 +251,7 @@ class Excel extends Component {
   handleSetId = (att = {}, cat = {}) => {
     console.log(`Set ID`, att, cat);
     const cell = this.state.setIdCell;
+    const test = this.sheet.getCell();
     const attCell = this.sheet.getCell(1, cell.columnNumber());
     const catCell = this.sheet.getCell(cell.rowNumber(), 1);
     if (attCell.getValue() !== att.value || attCell.getFormula() != null
@@ -235,8 +263,25 @@ class Excel extends Component {
     this.setState({openSetId: null, setIdCell: null});
   };
 
+  handleSetPermit = (pmt = {}) => {
+    console.log(`Set Permit`, pmt);
+    const cell = this.state.setIdCell;
+    cell.setCellPermit(true);
+    const permitCell = cell.getCellPermit();
+    if(permitCell !== pmt) {
+      this.props.showMessage('Content is overridden.', "info");
+    }
+    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt || '');
+
+    this.setState({openSetPermit: null, setIdCell: null});
+  };
+
   handleCloseSetId = () => {
     this.setState({openSetId: null, setIdCell: null});
+  };
+
+  handleCloseSetPermit = () => {
+    this.setState({openSetPermit: null, setIdCell: null});
   };
 
   /**
@@ -438,6 +483,7 @@ class Excel extends Component {
       || this.state.openDropdown !== nextState.openDropdown
       || this.state.fileName !== nextState.fileName
       || this.state.openDataValidationDialog !== nextState.openDataValidationDialog
+      || this.state.openSetPermit !== nextState.openSetPermit
       || this.state.openEditor !== nextState.openEditor
       || this.state.contextMenu !== nextState.contextMenu
       || this.state.catOptions !== nextState.catOptions
@@ -506,6 +552,13 @@ class Excel extends Component {
             <Sheets ref={this.sheetRef} context={this} sheetIdx={this.currentSheetIdx}/>
             <ExcelBottomBar context={this}/>
           </Card>
+          <SetPermitDialog
+            anchorEl={this.state.openSetPermit}
+            cell={this.state.setIdCell}
+            permitOptions={this.permitOptions}
+            handleSetPermit={this.handleSetPermit}
+            handleClose={this.handleCloseSetPermit}
+          />
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}

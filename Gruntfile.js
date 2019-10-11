@@ -11,8 +11,7 @@ module.exports = function(grunt) {
   const backendFilesConfig = {
     expand: true,
     cwd: "./backend",
-    src: [ "**" ],
-    // src: [ "public/**", "controller/**", "config/**", ""models/**", "routes/**", "index.js", "app.js", "package.json", "yarn.lock" ],
+    src: [ "controller/**", "config/error.js", "models/**", "routes/**", "app.js", "index.js", "package.json", "utils.js", "yarn.lock" ],
     dest: "build/zip"
   };
 
@@ -25,13 +24,12 @@ module.exports = function(grunt) {
 
   const projectConfig = {
     expand: true,
-    cwd: "./Data-Project-Config",
+    cwd: '../Data-Project-Config/',
     src: [
-      "**"
-      // ".ebextensions/**",
-      // "config/**"
+      '.ebextensions/**', // amazon beanstalk configs
+      'config/**'
     ],
-    dest: "build/zip"
+    dest: 'build/zip/'
   };
 
   // const awsFilesConfig = {
@@ -69,7 +67,7 @@ module.exports = function(grunt) {
         exec: "yarn run frontend:build"
       },
       pivotal: {
-        exec: `cd ./build/zip && cf push ${pivotal.appName} -b "nodejs_buildpack" -c "node index.js"`
+        exec: `cd ./build/zip && cf push ${pivotal.appName} -c "node index.js"`
       }
     },
     env: { aws, pivotal }
@@ -84,7 +82,7 @@ module.exports = function(grunt) {
 
   // registerTask(taskName, taskList)
   grunt.registerTask("build:aws", ["clean", "run:report", "env:aws", "run:buildFrontend", "mkdir", "copy:main", "compress"]);
-
+  grunt.registerTask("copy:files", ["copy:main"]);
   grunt.registerTask("pivotal:build", ["clean", "env:pivotal", "run:buildFrontend", "mkdir", "copy:main"]);
   grunt.registerTask("pivotal:publish", ["run:pivotal"]);
   grunt.registerTask("build:pivotal", ["pivotal:build", "pivotal:publish"]);

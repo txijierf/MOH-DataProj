@@ -44,7 +44,7 @@ const _init = async () => {
 
     app.set('port', process.env.PORT || 3000);
 
-    await setupDatabases({ createDatabase: false });
+    await setupDatabases({ wipeDatabase: true, createDummyData: true });
     
     app.use(cors({ credentials: true, origin: (_origin, callback) => callback(null, true) }));
 
@@ -73,7 +73,7 @@ const _init = async () => {
     app.use(passport.initialize());
     app.use(passport.session());
     
-    setup.setup();
+    // setup.setup();
     
     //ROUTES
     // home page

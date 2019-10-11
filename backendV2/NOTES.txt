@@ -1,7 +1,0 @@
-PERMISSIONS
-'CRUD-workbook-template',
-'create-delete-attribute-category',
-'user-management',
-'system-management',
-'workbook-query',
-'package-management'

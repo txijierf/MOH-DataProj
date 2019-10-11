@@ -5136,9 +5136,9 @@ fast-deep-equal@^2.0.1:
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
   integrity sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk=
 
-"fast-formula-parser@git+https://github.com/LesterLyu/fast-formula-parser.git":
+"fast-formula-parser@git+https://github.com/LesterLyu/fast-formula-parser.git#moh":
   version "1.0.0"
-  resolved "git+https://github.com/LesterLyu/fast-formula-parser.git#a2b05de9e9ac31ac2970227eca3f8af793eaa81a"
+  resolved "git+https://github.com/LesterLyu/fast-formula-parser.git#e690f5cd3579422b95c34e7dade615c56ec90596"
   dependencies:
     bahttext "^1.1.0"
     bessel "^1.0.2"
@@ -13759,12 +13759,12 @@ ws@^6.0.0, ws@^6.1.2, ws@^6.2.1:
   dependencies:
     async-limiter "~1.0.0"
 
-"xlsx-populate@https://github.com/greylemon/xlsx-populate":
+"xlsx-populate@https://github.com/greylemon/xlsx-populate#Haonan":
   version "1.19.1"
-  resolved "https://github.com/greylemon/xlsx-populate#58f3205f18807705d88a03a5cab06a908036bafc"
+  resolved "https://github.com/greylemon/xlsx-populate#cf46a2b39cf4306fc0ad32c68aa7e341516f4ab6"
   dependencies:
     cfb "^1.1.0"
-    fast-formula-parser "git+https://github.com/LesterLyu/fast-formula-parser.git"
+    fast-formula-parser "git+https://github.com/LesterLyu/fast-formula-parser.git#moh"
     jszip "^3.2.1"
     saxes "^3.1.9"
 
