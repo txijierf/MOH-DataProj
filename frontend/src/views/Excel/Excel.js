@@ -94,12 +94,34 @@ class Excel extends Component {
         this.setPermission(anchorEl);
       },
       'div1': null,
-      'Copy \t\t\t Ctrl+C': () => {
-        this.setState({contextMenu: null})
+      'Add New Row': (anchorEl) => {
+        console.log('Add New Category');
+        this.addCategory();
+        this.setState({contextMenu: null});
+        //this.setId(anchorEl);
       },
-      'Set User Permit': (anchorEl) => {
-        console.log('Set User Permit');
-        this.setPermission(anchorEl);
+      'Add New Column': (anchorEl) => {
+        console.log('Add New Attribute');
+        this.addAttribute();
+        this.setState({contextMenu: null});
+        //this.setId(anchorEl);
+      },
+
+      'Delete Row': () => {
+        console.log('Delete Category');
+        this.delCategory();
+        this.setState({contextMenu: null});
+      },
+      'Delete Column': () => {
+        console.log('Delete Attribute');
+        this.delAttribute();
+        this.setState({contextMenu: null});
+      },
+
+      'div2': null,
+
+      'Copy \t\t\t Ctrl+C': () => {
+        this.setState({contextMenu: null});
       },
       'Paste \t\t\t Ctrl+V': async () => {
         const result = await navigator.permissions.query({name: "clipboard-read"});
@@ -183,6 +205,31 @@ class Excel extends Component {
     console.log(`Updated ${updates.length + 1} cells.`);
     return true;
   };
+
+  addAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.addColumn(cell.columnNumber());
+    this.renderCurrentSheet();
+  }
+
+  addCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.addRow(cell.rowNumber());
+    this.renderCurrentSheet();
+  }
+
+  delAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    console.log(cell.columnNumber());
+    this.sheet.deleteColumn(cell.columnNumber());
+    this.renderCurrentSheet();
+  }
+
+  delCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.deleteRow(cell.rowNumber());
+    this.renderCurrentSheet();
+  }
 
   setPermission = (anchorEl) => {
     const cell = this.selected;

@@ -89,7 +89,7 @@ const _setupMongoose = async (options) => {
       await mongoose.connect(databaseEnv, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true, useCreateIndex: true, });
 
       // Options
-      if(wipeDatabase) await _wipeDatabase();
+      // if(wipeDatabase) await _wipeDatabase();
       if(createDatabase) await _createDatabase();
       if(createDummyData) await _createDummyData();
 
