@@ -41,28 +41,23 @@ Clone github repos and install dependencies
    ```
  - In your favorite location e.g. Desktop, downloaad this repository
    ```bash
-   git clone https://github.com/LesterLyu/MOHLTC-DataProject.git
+   git clone https://github.com/greylemon/MOHLTC-DataProject.git
    ```
-   Directory `./MOHLTC-DataProject/` is for backend project; Directory `./MOHLTC-DataProject/fronend` is for frontend project.
-   - Install backend dependencies:
-     ```bash
-     # Go to the backend folder
-     cd ./MOHLTC-DataProject
-     # Install dependencies
-     yarn install (ignore all the errors as long as the command returns 'Done in xx s')
-     # Run
-     yarn start
-     ```
-   - Install frontend dependencies:
-     ```bash
-     # Go to the frontend folder
-     cd ./MOHLTC-DataProject/frontend
-     # Install dependencies
-     yarn install
-     # Run, this takes at least 1 minute. It will open your default browser and navigate to http://localhost:3003
-     yarn start
-     ```
+   Directory `./MOHLTC-DataProject/backend` is for backend project; Directory `./MOHLTC-DataProject/fronend` is for frontend project.
+
+  - Install dependencies:
+
+  ```
+  # Run
+  yarn deps (ignore all the errors as long as the command returns 'Done in xx s')
+  ```
+
+  - Run the app:
+
+  ```
+  # Run, this takes at least 1 minute. Go to http://localhost:3003 for the app.
+  yarn dev
+  ```
 
 ## Step 4 Registration
 Go to [`http://localhost:3000`](http://localhost:3000), You will be redirect to a setup page. Note that this page only shows up when there are no user registered in this system.  (this url does not work in IE)
-  
