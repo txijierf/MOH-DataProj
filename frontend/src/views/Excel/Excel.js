@@ -22,6 +22,7 @@ import DataValidationDialog from './components/DataValidationDialog';
 import CellEditor from './components/Editor';
 import Loading from "../components/Loading";
 import RightClickMenu from "./components/RightClickMenu";
+import Cell from "./components/Cell.js"
 
 class Excel extends Component {
 
@@ -52,18 +53,17 @@ class Excel extends Component {
       openEditor: null,
       dropdownCell: null,
       setIdCell: null,
+      setPermitCell: null,
       editorCell: null,
       fileName: 'Untitled workbook',
-      openSetPermit: null,
       contextMenu: null,
-      dataFetched: false,
+
+      // set ID dialog
       attOptions: [],
-      catOptions: []
+      catOptions: [],
+      waitAttOptResolve: true,
+      waitCatOptResolve: true
     };
-
-    //set permit dialog
-    this.permitOptions = [];
-
     this.initialFileName = 'Untitled workbook'; // uploaded file name
     this.excelManager = new ExcelManager(props);
     this.attCatManager = new AttCatManager(props);
@@ -73,9 +73,7 @@ class Excel extends Component {
     this.sheetRef = React.createRef();
     this.editorRef = React.createRef();
 
-    // set ID dialog
-    // this.attOptions = [];
-    // this.catOptions = [];
+
 
     //set permit dialog
     this.permitOptions = [];
@@ -87,13 +85,16 @@ class Excel extends Component {
     this.menu = {
       'Set ID': (anchorEl) => {
         console.log('SET ID');
+
         this.setId(anchorEl);
       },
       'Set User Permit': (anchorEl) => {
         console.log('Set User Permit');
         this.setPermission(anchorEl);
       },
+
       'div1': null,
+
       'Add New Row': (anchorEl) => {
         console.log('Add New Category');
         this.addCategory();
@@ -195,48 +196,6 @@ class Excel extends Component {
     return this.workbook.sheet(sheetNo).getCell(row + 1, col + 1);
   }
 
-  setPermit(sheetNo, row, col, permit) {
-    sheetNo = sheetNo == null ? this.currentSheetIdx : sheetNo;
-    const sheet = this.workbook.sheet(sheetNo);
-    const cell = sheet.getCell(row + 1, col + 1);
-    let updates;
-
-    updates = cell.setCellPermit(permit);
-    console.log(`Updated ${updates.length + 1} cells.`);
-    return true;
-  };
-
-  addAttribute() {
-    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
-    this.sheet.addColumn(cell.columnNumber());
-    this.renderCurrentSheet();
-  }
-
-  addCategory() {
-    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
-    this.sheet.addRow(cell.rowNumber());
-    this.renderCurrentSheet();
-  }
-
-  delAttribute() {
-    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
-    console.log(cell.columnNumber());
-    this.sheet.deleteColumn(cell.columnNumber());
-    this.renderCurrentSheet();
-  }
-
-  delCategory() {
-    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
-    this.sheet.deleteRow(cell.rowNumber());
-    this.renderCurrentSheet();
-  }
-
-  setPermission = (anchorEl) => {
-    const cell = this.selected;
-    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
-  }
-
-
   /**
    * Update a cell's data without render it.
    * Cell's value and formula will be overrode.
@@ -315,19 +274,24 @@ class Excel extends Component {
   };
 
   setId = (anchorEl) => {
-    const cell = this.selected;
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
     this.setState({contextMenu: null, openSetId: anchorEl, setIdCell: cell});
   };
 
   setPermission = (anchorEl) => {
-    const cell = this.selected;
-    this.setState({contextMenu: null, openSetPermit: anchorEl, setIdCell: cell});
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    console.log('selected', cell);
+
+    const permitLable = ['editor mode', 'read only'];
+    const userPermit = {label: permitLable[cell.getCellPermit()], value: cell.getCellPermit()}
+    this.setState({contextMenu: null, openSetPermit: anchorEl, setPermitCell: cell, userPermit: userPermit});
   }
 
   handleSetId = (att = {}, cat = {}) => {
     console.log(`Set ID`, att, cat);
     const cell = this.state.setIdCell;
-    const test = this.sheet.getCell();
+    console.log(cell);
+
     const attCell = this.sheet.getCell(1, cell.columnNumber());
     const catCell = this.sheet.getCell(cell.rowNumber(), 1);
     if (attCell.getValue() !== att.value || attCell.getFormula() != null
@@ -341,15 +305,15 @@ class Excel extends Component {
 
   handleSetPermit = (pmt = {}) => {
     console.log(`Set Permit`, pmt);
-    const cell = this.state.setIdCell;
-    cell.setCellPermit(true);
+    const cell = this.state.setPermitCell;
     const permitCell = cell.getCellPermit();
-    if(permitCell !== pmt) {
+    if(permitCell !== pmt.value) {
       this.props.showMessage('Content is overridden.', "info");
     }
-    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt || '');
-
-    this.setState({openSetPermit: null, setIdCell: null});
+    console.log(permitCell);
+    this.setPermit(null, cell.rowNumber() - 1, cell.columnNumber() - 1, pmt.value || '');
+    console.log(permitCell);
+    this.setState({openSetPermit: null, setPermitCell: null});
   };
 
   handleCloseSetId = () => {
@@ -464,22 +428,14 @@ class Excel extends Component {
     this.setState({contextMenu: {selections, top: e.clientY, left: e.clientX, anchorEl: e.target}})
   };
 
-  fetchData = async () => {
-    const catOptions = await this.attCatManager.get(true);
-    const attOptions = await this.attCatManager.get(false);
-
-    // console.log("options", catOptions, attOptions);
-
-    this.setState({ catOptions, attOptions, dataFetched: true }, ()=>console.log(this.state));
-  };
-
   componentDidMount() {
     const sheetWidth = this.sheetContainerRef.current.offsetWidth;
     const sheetHeight = this.sheetContainerRef.current.offsetHeight;
 
-    if(!this.state.dataFetched) this.fetchData();
-    // this.attCatManager.get(true).then(atts => this.attOptions = atts);
-    // this.attCatManager.get(false).then(cats => this.catOptions = cats);
+    this.attCatManager.get(true).then(atts => this.setState({attOptions: atts, waitAttOptResolve: false}));
+    this.attCatManager.get(false).then(cats => this.setState({catOptions: cats, waitCatOptResolve: false}));
+    // this.attOptions = this.attCatManager.get(true);
+    // this.catOptions = this.attCatManager.get(false);
 
     if (this.mode === 'admin create') {
       // create local workbook storage
@@ -554,17 +510,16 @@ class Excel extends Component {
       || this.state.sheetHeight !== nextState.sheetHeight
       || this.state.loadingMessage !== nextState.loadingMessage
       || this.state.loaded !== nextState.loaded
+      || this.state.waitCatOptResolve !== nextState.waitCatOptResolve
+      || this.state.waitAttOptResolve !== nextState.waitAttOptResolve
       || this.state.currentSheetIdx !== nextState.currentSheetIdx
       || this.state.openSetId !== nextState.openSetId
       || this.state.openSetPermit !== nextState.openSetPermit
       || this.state.openDropdown !== nextState.openDropdown
       || this.state.fileName !== nextState.fileName
       || this.state.openDataValidationDialog !== nextState.openDataValidationDialog
-      || this.state.openSetPermit !== nextState.openSetPermit
       || this.state.openEditor !== nextState.openEditor
       || this.state.contextMenu !== nextState.contextMenu
-      || this.state.catOptions !== nextState.catOptions
-      || this.state.attOptions !== nextState.attOptions
   }
 
   componentWillUnmount() {
@@ -607,11 +562,36 @@ class Excel extends Component {
     )
   }
 
+  addAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.addColumn(cell.columnNumber());
+    this.renderCurrentSheet();
+  }
+
+  addCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.addRow(cell.rowNumber());
+    this.renderCurrentSheet();
+  }
+
+  delAttribute() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    console.log(cell.columnNumber());
+    this.sheet.deleteColumn(cell.columnNumber());
+    this.renderCurrentSheet();
+  }
+
+  delCategory() {
+    const cell = this.sheet.getCell(this.selected[0],this.selected[1]);
+    this.sheet.deleteRow(cell.rowNumber());
+    this.renderCurrentSheet();
+  }
+
   render() {
     console.log('render create excel');
     const height = this.mode === 'user' ? 'calc(100vh - 55px - 45.8px - 50px - 100px)'
       : 'calc(100vh - 55px - 45.8px - 50px - 35px - 50px - 58px)';
-    if (!this.isLoaded) {
+    if (!this.isLoaded || this.state.waitAttOptResolve || this.state.waitCatOptResolve) {
       return (
         <div style={{height}}
              ref={this.sheetContainerRef}>
@@ -619,6 +599,7 @@ class Excel extends Component {
         </div>
       );
     } else if (this.mode === 'admin create' || this.mode === 'admin edit') {
+      console.log("admin workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>
@@ -631,7 +612,7 @@ class Excel extends Component {
           </Card>
           <SetPermitDialog
             anchorEl={this.state.openSetPermit}
-            cell={this.state.setIdCell}
+            cell={this.state.setPermitCell}
             permitOptions={this.permitOptions}
             handleSetPermit={this.handleSetPermit}
             handleClose={this.handleCloseSetPermit}
@@ -639,8 +620,8 @@ class Excel extends Component {
           <SetIdDialog
             anchorEl={this.state.openSetId}
             cell={this.state.setIdCell}
-            catOptions={this.state.catOptions}
             attOptions={this.state.attOptions}
+            catOptions={this.state.catOptions}
             handleSetId={this.handleSetId}
             handleClose={this.handleCloseSetId}
           />
@@ -649,6 +630,7 @@ class Excel extends Component {
         </div>
       );
     } else if (this.mode === 'user') {
+      console.log("user workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>
@@ -660,6 +642,7 @@ class Excel extends Component {
           {this.common()}
         </div>)
     } else {
+      console.log("other workbook");
       return (
         <div className="animated fadeIn">
           <Card xs={12}>

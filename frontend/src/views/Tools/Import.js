@@ -31,9 +31,9 @@ const upload = (attCatManager, showMessage) => () => {
             const firstCellInRow = row.cell(1);
             const cellValue = firstCellInRow.getValue();
             if (/^[0-9]*$/.test(cellValue)) {
-              for (let i = 0; i < cells.length; i++) {
+              for (let i = 1; i < cells.length; i++) {
                 const cell = cells[i][1];
-                if (typeof cell.getValue() === "string") {
+                if (typeof cell.getValue() === "string" && cell.merged() === false) {
                   const newItem = {
                     id: Number(cellValue),
                     name: cell.getValue(),
@@ -52,9 +52,9 @@ const upload = (attCatManager, showMessage) => () => {
             const cellValue = cell.getValue();
             if (/^[0-9]*$/.test(cellValue)) {
               const maxRowNumber = rows[rows.length - 1][0];
-              for (let i = 1; i <= maxRowNumber; i++) {
+              for (let i = 2; i <= maxRowNumber; i++) {
                 const value = sheet.row(i).cell(columnNumber).getValue();
-                if (typeof value === "string") {
+                if (typeof value === "string" && cell.merged() === false) {
                   const newItem = {id: Number(cellValue), name: value, description: file.name + ' > ' + sheet.name()}
                   attributes.push(newItem);
                   sheetData.atts.push(newItem);

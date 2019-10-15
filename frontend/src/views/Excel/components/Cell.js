@@ -421,8 +421,8 @@ class Cell extends PureComponent {
   renderNormalCell(value) {
     return (
       <span style={{pointerEvents: 'none'}}>
-          {value}
-        </span>
+        {value}
+      </span>
     )
   }
 

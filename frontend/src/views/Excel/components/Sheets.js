@@ -131,7 +131,7 @@ class Worksheets extends Component {
   };
 
   onMouseUp = (row, col, cellStyle, e) => {
-    // console.log(`Mouse up: ${row}, ${col}`);
+    //console.log(`Mouse up: ${row}, ${col}`);
     if (e.button === 0) {
       this.isMouseDown = false;
     }
@@ -140,7 +140,7 @@ class Worksheets extends Component {
 
   onMouseOver = (row, col, cellStyle) => {
     if (this.isMouseDown) {
-      // console.log(`Mouse over: ${row}, ${col}`);
+      //console.log(`Mouse over: ${row}, ${col}`);
       this.selections.setSelections([
         Math.min(row, this.startCell[0]),
         Math.min(col, this.startCell[1]),

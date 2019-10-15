@@ -4,6 +4,7 @@ import React from "react";
 import {ToolBarDivider} from './ExcelToolBar';
 import PropTypes from "prop-types";
 import {RichText, hooks} from "../utils";
+import Excel from "../Excel";
 
 const styles = theme => ({
   input: {
@@ -50,9 +51,20 @@ class FormulaBar extends Component {
 
   handleChange = what => (event) => {
     this.setState({[what]: event.target.value});
-    if (this.td.firstElementChild) {
-      this.td.firstElementChild.innerHTML = event.target.value;
+
+    console.log(this.orginalInput);
+    const success = this.excel.setData(this.currentSheetIdx, this.data.row - 1, this.data.col - 1, event.target.value);
+
+    if (success) {
+      // this.setState({openEditor: null, editorCell: null});
+      this.excel.renderCurrentSheet();
+    } else {
+      this.excel.showDataValidationDialog();
     }
+
+    // if (this.td.firstElementChild) {
+    //   this.td.firstElementChild.innerHTML = event.target.value;
+    // }
   };
 
   focusin = () => {
