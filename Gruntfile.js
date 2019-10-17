@@ -17,7 +17,7 @@ module.exports = function(grunt) {
 
   const frontendFilesConfig = {
     expand: true,
-    cwd: "./frontend/dist",
+    cwd: "./frontend/build",
     src: [ "**" ],
     dest: "build/zip/public/react"
   };

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import AttCatManager from "../../controller/attCatManager";
 import {
   Grid,
@@ -16,9 +16,9 @@ import {
 } from "@material-ui/core";
 import {withStyles} from "@material-ui/core/es";
 import PropTypes from "prop-types";
-import SortableTree, {toggleExpandedForAll, addNodeUnderParent, removeNodeAtPath} from 'react-sortable-tree';
+import SortableTree, {toggleExpandedForAll, changeNodeAtPath, addNodeUnderParent, removeNodeAtPath} from 'react-sortable-tree';
 import 'react-sortable-tree/style.css';
-import {UnfoldLess, UnfoldMore, Add, Search, NavigateBefore, NavigateNext, Delete} from "@material-ui/icons";
+import {UnfoldLess, UnfoldMore, Add, Search, NavigateBefore, NavigateNext, Delete, Edit, Save, Cancel} from "@material-ui/icons";
 import {ToolBarDivider} from "../Excel/components/ExcelToolBarUser";
 import Loading from '../components/Loading';
 
@@ -39,6 +39,43 @@ const styles = theme => ({
   }
 });
 
+const EditButton = ({ handleClick }) => (
+  <IconButton onClick={handleClick}>
+    <Edit fontSize="small"/> 
+  </IconButton>
+);
+
+const SaveButton = ({ handleClick }) => (
+  <IconButton aria-label="Save changes to this group" onClick={handleClick}>
+    <Save fontSize="small"/> 
+  </IconButton>
+);
+
+const CancelEdit = ({ handleClick }) => (
+  <IconButton aria-label="Cancelling changes to this group" onClick={handleClick}>
+    <Cancel fontSize="small"/> 
+  </IconButton>
+);
+
+const DeleteGroup = ({ handleClick }) => (
+  <IconButton aria-label="Delete this group" onClick={handleClick}>
+    <Delete fontSize="small"/>
+  </IconButton>
+);
+
+const EditInput = ({ value, handleInputChange, handleSubmit, handleCancelEdit }) => {
+  const handleKeyDown = (event) => {
+    if(event.key === "Enter") {
+      event.preventDefault();
+      handleSubmit();
+    } else if(event.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
+  return <input autoFocus type="text" defaultValue={value} onChange={handleInputChange} onKeyDown={handleKeyDown}/>
+};
+
 class AttCatGroup extends Component {
 
   constructor(props) {
@@ -53,16 +90,16 @@ class AttCatGroup extends Component {
       searchFoundCount: null,
       dialog: false,
       dialogValue: '',
+      editValue: ""
     };
     this.showMessage = this.props.showMessage;
     this.attCatManager.getGroup(this.mode === 'att').then(data => {
-      console.log('set', data);
       this.setState({
         loading: false,
         treeData: data
       })
     })
-  }
+  };
 
   /**
    * Save to backend.
@@ -90,6 +127,41 @@ class AttCatGroup extends Component {
         console.log(err);
         this.props.showMessage(err.response ? err.response.data.message : err.message, 'error');
       })
+  };
+
+  edit = (node, path) => () => {
+    this.setState({ 
+      treeData: changeNodeAtPath({
+        treeData: this.state.treeData,
+        path,
+        getNodeKey: this.getNodeKey,
+        newNode: { ...node, editable: true }
+      }),
+      editValue: node.title
+    });
+  };
+
+  saveEdit = (node, path) => () => {
+    this.setState({ 
+      treeData: changeNodeAtPath({
+        treeData: this.state.treeData,
+        path,
+        getNodeKey: this.getNodeKey,
+        newNode: { ...node, title: this.state.editValue, editable: false }
+      }),
+    }, () => this.save(this.state.treeData));
+  };
+
+  cancelEdit = (node, path) => () => {
+    this.setState({ 
+      treeData: changeNodeAtPath({
+        treeData: this.state.treeData,
+        path,
+        getNodeKey: this.getNodeKey,
+        newNode: { ...node, editable: false }
+      }),
+      editValue: ""
+    });
   };
 
   getNodeKey = ({node, treeIndex}) => {
@@ -140,7 +212,8 @@ class AttCatGroup extends Component {
         const {treeData} = addNodeUnderParent({
           treeData: this.state.treeData, newNode: {
             title: dialogValue,
-            _id: ids[0]
+            _id: ids[0],
+            editable: false
           }
         });
         this.save(treeData).then(success => {
@@ -189,9 +262,11 @@ class AttCatGroup extends Component {
     if (this.state.loading) {
       return <Loading/>;
     }
+
+    // TODO : Fix infinite loop in Grid child!!
     return (
       <Paper>
-        <AppBar position="static" color="default" style={{}}>
+        <AppBar position="static" color="default">
           <Grid container className={classes.root}>
             <Button aria-label="Add" className={classes.button}
                     onClick={this.add}>
@@ -251,13 +326,22 @@ class AttCatGroup extends Component {
               })
             }}
             generateNodeProps={({node, path}) => {
+              const EditMode = () => [ <SaveButton node={node} path={path} handleClick={this.saveEdit(node, path)}/>, <CancelEdit node={node} path={path} handleClick={this.cancelEdit(node, path)}/> ];
+
+              let ModifyButtons = node.editable ? EditMode() : [ <EditButton handleClick={this.edit(node, path)}/> ];
+
+
+              const handleInputChange = ({ target: { value } }) => this.setState({ editValue: value });
+
+              const handleInputSubmit = this.saveEdit(node, path);
+              const handleCancelEdit = this.cancelEdit(node,path);
               return {
+                title: node.editable ? <EditInput value={node.title} handleInputChange={handleInputChange} handleSubmit={handleInputSubmit} handleCancelEdit={handleCancelEdit}/> : node.title,
                 buttons: [
-                  <IconButton aria-label="Delete this group" onClick={this.delete(node._id, path)}>
-                    <Delete fontSize="small"/>
-                  </IconButton>
+                  ...ModifyButtons,
+                  <DeleteGroup aria-label="Delete this group" handleClick={this.delete(node._id, path)}/>
                 ]
-              };
+              }
             }}
           />
         </div>
