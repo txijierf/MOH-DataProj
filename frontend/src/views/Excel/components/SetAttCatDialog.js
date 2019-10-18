@@ -1,18 +1,17 @@
 import React from "react";
 import {
-  Button, Chip,
+  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle, MenuItem, NoSsr,
-  Paper, TextField, Typography
+  DialogTitle,
+  Paper
 } from "@material-ui/core";
 import Draggable from 'react-draggable';
 import DropdownTreeSelect from "react-dropdown-tree-select";
 import 'react-dropdown-tree-select/dist/styles.css'
 import "./SetIdTree.css";
-import Select from "react-select";
 
 function PaperComponent(props) {
   return (
@@ -85,6 +84,8 @@ class SetAttributeDialog extends React.Component {
     this.setState({select: true});
   };
   next (){
+    const attOption = this.selectedNodes.map(node => node.attcat);
+    console.log(attOption);
     return (
       <>
         <Dialog
@@ -99,22 +100,6 @@ class SetAttributeDialog extends React.Component {
             <DialogContentText>
               Second Step: Select the Id you want:
             </DialogContentText>
-            <Select
-              value={this.state.selectedAtt}
-              onChange={this.handleChange('selectedAtt')}
-              options={this.attOptions}
-              classes={classes}
-              styles={selectStyles}
-              components={components}
-              textFieldProps={{
-                label: 'Attribute',
-                InputLabelProps: {
-                  shrink: true,
-                },
-              }}
-              isClearable
-              placeholder={"Attribute"}
-            />
             <DropdownTreeSelect mode={"simpleSelect"} showDropdown={"always"} data={this.state.treeData}
                                 onChange={this.handleChangeGroup} className="mdl-demo" keepChildrenOnSearch="true" keepTreeOnSearch="true"/>
           </DialogContent>
