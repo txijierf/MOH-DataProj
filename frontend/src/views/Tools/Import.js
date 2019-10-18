@@ -33,7 +33,7 @@ const upload = (attCatManager, showMessage) => () => {
             if (/^[0-9]*$/.test(cellValue)) {
               for (let i = 1; i < cells.length; i++) {
                 const cell = cells[i][1];
-                if (typeof cell.getValue() === "string" && cell.merged() === false && cell.column.hidden() === false) {
+                if (typeof cell.getValue() === "string" && cell.merged() === false && cell.column().hidden() === false) {
                   const newItem = {
                     id: Number(cellValue),
                     name: cell.getValue(),

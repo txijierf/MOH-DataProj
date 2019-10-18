@@ -6,6 +6,7 @@ module.exports = mongoose.model('AttributeGroup',
         // _id auto generated
         groupNumber: {type: Number, required: true},
         name: {type: String, required: true},
+        optional: {type: Boolean},
         parent: ObjectId, // AttributeGroup._id
         children: [ObjectId], // AttributeGroup._id
     }));

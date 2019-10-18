@@ -198,6 +198,7 @@ export default class AttCatManager {
         const document = {
           _id: node._id,
           name: node.title,
+          optional: node.optional,
           children: []
         };
         documents.push(document);
@@ -211,6 +212,7 @@ export default class AttCatManager {
         const document = {
           _id: node._id,
           name: node.title,
+          optional: node.optional,
           children: [],
           parent: currNode._id
         };

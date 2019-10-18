@@ -143,7 +143,7 @@ module.exports = {
             return next(error.api.NO_PERMISSION);
         }
         const groupNumber = req.session.user.groupNumber;
-        AttributeGroup.find({groupNumber}, 'name children parent', (err, documents) => {
+        AttributeGroup.find({groupNumber}, 'name optional children parent', (err, documents) => {
             if (err) return next(err);
             res.json({success: true, documents});
         })

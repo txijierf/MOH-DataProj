@@ -5,6 +5,7 @@ import {
   Button,
   AppBar,
   Paper,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -90,6 +91,7 @@ class AttCatGroup extends Component {
       searchFoundCount: null,
       dialog: false,
       dialogValue: '',
+      dialogOptionValue: false,
       editValue: ""
     };
     this.showMessage = this.props.showMessage;
@@ -108,6 +110,7 @@ class AttCatGroup extends Component {
   save = async treeData => {
     if (!treeData) treeData = this.state.treeData;
     try {
+      console.log(treeData)
       await this.attCatManager.updateGroup(this.mode === 'att', treeData);
       return true;
     } catch (err) {
@@ -206,13 +209,13 @@ class AttCatGroup extends Component {
 
   handleDialogAdd = () => {
     const dialogValue = this.state.dialogValue;
-    this.setState({dialog: false, dialogValue: ''});
     this.attCatManager.generateObjectId()
       .then(ids => {
         const {treeData} = addNodeUnderParent({
           treeData: this.state.treeData, newNode: {
             title: dialogValue,
             _id: ids[0],
+            optional: this.state.dialogOptionValue,
             editable: false
           }
         });
@@ -220,6 +223,7 @@ class AttCatGroup extends Component {
           if (success) this.setState({treeData});
         })
       })
+      .finally(() => this.setState({dialog: false, dialogValue: '', dialogOptionValue: false}))
   };
 
   onDialogValueChange = event => {
@@ -243,6 +247,7 @@ class AttCatGroup extends Component {
             onChange={this.onDialogValueChange}
             fullWidth
           />
+          Optional: <Checkbox checked={this.state.dialogOptionValue} onClick={() => this.setState({ dialogOptionValue: !this.state.dialogOptionValue })}/>
         </DialogContent>
         <DialogActions>
           <Button onClick={this.handleCloseDialog} color="primary">
@@ -263,6 +268,7 @@ class AttCatGroup extends Component {
       return <Loading/>;
     }
 
+    console.log(this.state.treeData)
     // TODO : Fix infinite loop in Grid child!!
     return (
       <Paper>
@@ -326,6 +332,7 @@ class AttCatGroup extends Component {
               })
             }}
             generateNodeProps={({node, path}) => {
+
               const EditMode = () => [ <SaveButton node={node} path={path} handleClick={this.saveEdit(node, path)}/>, <CancelEdit node={node} path={path} handleClick={this.cancelEdit(node, path)}/> ];
 
               let ModifyButtons = node.editable ? EditMode() : [ <EditButton handleClick={this.edit(node, path)}/> ];
@@ -336,7 +343,7 @@ class AttCatGroup extends Component {
               const handleInputSubmit = this.saveEdit(node, path);
               const handleCancelEdit = this.cancelEdit(node,path);
               return {
-                title: node.editable ? <EditInput value={node.title} handleInputChange={handleInputChange} handleSubmit={handleInputSubmit} handleCancelEdit={handleCancelEdit}/> : node.title,
+                title: node.editable ? <EditInput value={node.title} handleInputChange={handleInputChange} handleSubmit={handleInputSubmit} handleCancelEdit={handleCancelEdit}/> : <div className={node.optional && "text-warning" }>{node.title}</div>,
                 buttons: [
                   ...ModifyButtons,
                   <DeleteGroup aria-label="Delete this group" handleClick={this.delete(node._id, path)}/>
