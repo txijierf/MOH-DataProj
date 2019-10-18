@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "backend:run": "yarn --cwd backend start", 
-    "frontend:build": "yarn --cwd frontend webpack:build",
+    "frontend:build": "yarn --cwd frontend build",
     "deps": "yarn && yarn --cwd backend && yarn --cwd frontend",
-    "dev": "concurrently \"yarn --cwd backend dev\" \"yarn --cwd frontend webpack\""
+    "dev": "concurrently \"yarn --cwd backend dev\" \"yarn --cwd frontend start\""
   },
   "repository": {
     "type": "git",
