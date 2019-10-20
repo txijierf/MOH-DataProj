@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import AttCatManager from "../../controller/attCatManager";
 import {
   Grid,
@@ -19,7 +19,7 @@ import {withStyles} from "@material-ui/core/es";
 import PropTypes from "prop-types";
 import SortableTree, {toggleExpandedForAll, changeNodeAtPath, addNodeUnderParent, removeNodeAtPath} from 'react-sortable-tree';
 import 'react-sortable-tree/style.css';
-import {UnfoldLess, UnfoldMore, Add, Search, NavigateBefore, NavigateNext, Delete, Edit, Save, Cancel} from "@material-ui/icons";
+import {UnfoldLess, UnfoldMore, Add, Search, Storage, NavigateBefore, NavigateNext, Delete, Edit, Save, Cancel} from "@material-ui/icons";
 import {ToolBarDivider} from "../Excel/components/ExcelToolBarUser";
 import Loading from '../components/Loading';
 
@@ -40,6 +40,12 @@ const styles = theme => ({
   }
 });
 
+const constructPropertyTreeData = (properties) => properties.map(({ _id, title, properties }) => ({
+  title,
+  _id,
+  children: constructPropertyTreeData(properties)
+}));
+
 const EditButton = ({ handleClick }) => (
   <IconButton onClick={handleClick}>
     <Edit fontSize="small"/> 
@@ -49,6 +55,12 @@ const EditButton = ({ handleClick }) => (
 const SaveButton = ({ handleClick }) => (
   <IconButton aria-label="Save changes to this group" onClick={handleClick}>
     <Save fontSize="small"/> 
+  </IconButton>
+);
+
+const StorageButton = ({ handleClick }) => (
+  <IconButton onClick={handleClick}>
+    <Storage fontSize="small"/>
   </IconButton>
 );
 
@@ -77,6 +89,51 @@ const EditInput = ({ value, handleInputChange, handleSubmit, handleCancelEdit })
   return <input autoFocus type="text" defaultValue={value} onChange={handleInputChange} onKeyDown={handleKeyDown}/>
 };
 
+const PropertyTree = ({ treeData }) => (
+  <SortableTree 
+    treeData={treeData}
+    onChange={() => {}}
+  />
+);
+
+
+
+const PropertyDialog = ({ node, path, open, handleClose, handleSave }) => {
+  const [ properties, setProperties ] = useState(node.properties);
+  const treeData = open ? constructPropertyTreeData(properties) : [];
+  
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogContent>
+        <DialogTitle>Update Properties</DialogTitle>
+        <DialogContent>
+          <PropertyTree treeData={treeData}/>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">Cancel</Button>
+          <Button onClick={handleSave} color="primary">Update</Button>
+        </DialogActions>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const GroupDialog = ({ open, value, handleChange, handleClose, handleAdd }) => (
+  <Dialog open={open} onClose={handleClose} aria-labelledby="add-dialog">
+    <DialogTitle id="form-dialog-title">Add Group</DialogTitle>
+    <DialogContent>
+      <DialogContentText>
+        Enter the group name:
+      </DialogContentText>
+      <TextField autoFocus margin="dense" label="Group Name" type="text" value={value} onChange={handleChange} fullWidth/>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={handleClose} color="primary">Cancel</Button>
+      <Button onClick={handleAdd} color="primary">Add</Button>
+    </DialogActions>
+  </Dialog>
+);
+
 class AttCatGroup extends Component {
 
   constructor(props) {
@@ -89,17 +146,16 @@ class AttCatGroup extends Component {
       searchQuery: '',
       searchFocusOffset: 0,
       searchFoundCount: null,
+      newGroupDialog: false,
+      currentNode: {},
+      currentPath: [],
       dialog: false,
-      dialogValue: '',
-      dialogOptionValue: false,
+      dialogValue: "",
       editValue: ""
     };
     this.showMessage = this.props.showMessage;
     this.attCatManager.getGroup(this.mode === 'att').then(data => {
-      this.setState({
-        loading: false,
-        treeData: data
-      })
+      this.setState({ loading: false, treeData: data });
     })
   };
 
@@ -215,7 +271,7 @@ class AttCatGroup extends Component {
           treeData: this.state.treeData, newNode: {
             title: dialogValue,
             _id: ids[0],
-            optional: this.state.dialogOptionValue,
+            properties: [],
             editable: false
           }
         });
@@ -230,35 +286,18 @@ class AttCatGroup extends Component {
     this.setState({dialogValue: event.target.value})
   };
 
-  dialog = () => {
-    return (
-      <Dialog open={this.state.dialog} onClose={this.handleCloseDialog} aria-labelledby="add-dialog">
-        <DialogTitle id="form-dialog-title">Add Group</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Enter the group name:
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Group Name"
-            type="text"
-            value={this.state.dialogValue}
-            onChange={this.onDialogValueChange}
-            fullWidth
-          />
-          Optional: <Checkbox checked={this.state.dialogOptionValue} onClick={() => this.setState({ dialogOptionValue: !this.state.dialogOptionValue })}/>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={this.handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={this.handleDialogAdd} color="primary">
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
+  addProperty = (node, path) => () => {
+    console.log("Adding property", path)
+    this.setState({ newGroupDialog: true, currentNode: node, currentPath: path }); 
+  }
+
+  handleClosePropertyDialog = () => {
+    this.setState({ newGroupDialog: false, currentNode: {}, currentPath: [] });
+  };
+
+  // TODO
+  handleSaveProperties = () => {
+    this.setState({ newGroupDialog: false, currentNode: {}, currentPath: [] });
   };
 
   render() {
@@ -268,7 +307,6 @@ class AttCatGroup extends Component {
       return <Loading/>;
     }
 
-    console.log(this.state.treeData)
     // TODO : Fix infinite loop in Grid child!!
     return (
       <Paper>
@@ -332,18 +370,17 @@ class AttCatGroup extends Component {
               })
             }}
             generateNodeProps={({node, path}) => {
-
               const EditMode = () => [ <SaveButton node={node} path={path} handleClick={this.saveEdit(node, path)}/>, <CancelEdit node={node} path={path} handleClick={this.cancelEdit(node, path)}/> ];
+              const NormalMode = () => [ <StorageButton handleClick={this.addProperty(node, path)}/>, <EditButton handleClick={this.edit(node, path)}/> ];
 
-              let ModifyButtons = node.editable ? EditMode() : [ <EditButton handleClick={this.edit(node, path)}/> ];
-
+              let ModifyButtons = node.editable ? EditMode() : NormalMode();
 
               const handleInputChange = ({ target: { value } }) => this.setState({ editValue: value });
 
               const handleInputSubmit = this.saveEdit(node, path);
-              const handleCancelEdit = this.cancelEdit(node,path);
+              const handleCancelEdit = this.cancelEdit(node, path);
               return {
-                title: node.editable ? <EditInput value={node.title} handleInputChange={handleInputChange} handleSubmit={handleInputSubmit} handleCancelEdit={handleCancelEdit}/> : <div className={node.optional && "text-warning" }>{node.title}</div>,
+                title: node.editable ? <EditInput value={node.title} handleInputChange={handleInputChange} handleSubmit={handleInputSubmit} handleCancelEdit={handleCancelEdit}/> : node.title,
                 buttons: [
                   ...ModifyButtons,
                   <DeleteGroup aria-label="Delete this group" handleClick={this.delete(node._id, path)}/>
@@ -352,7 +389,8 @@ class AttCatGroup extends Component {
             }}
           />
         </div>
-        {this.dialog()}
+        <GroupDialog open={this.state.dialog} value={this.state.dialogValue} handleChange={this.onDialogValueChange} handleClose={this.handleCloseDialog} handleAdd={this.handleDialogAdd}/>
+        {this.state.newGroupDialog && <PropertyDialog node={this.state.currentNode} path={this.state.currentPath} open={this.state.newGroupDialog} handleClose={this.handleClosePropertyDialog} handleSave={this.handleSaveProperties}/>}
       </Paper>
     )
   }

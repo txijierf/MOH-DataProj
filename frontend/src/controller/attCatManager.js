@@ -165,13 +165,8 @@ export default class AttCatManager {
       for (let document of documents) {
         if (!document.parent) {
           // does not have parent, master node
-          const node = {
-            [labelName]: document.name,
-            _id: document._id,
-            children: []
-          };
-          tree.push(node);
-          this._buildTree(documents, labelName, node, tree, document.children);
+          tree.push({ [labelName]: document.name, _id: document._id, properties: document.properties, children: [] });
+          this._buildTree(documents, labelName, tree[tree.length-1], tree, document.children);
         }
       }
       return tree;
@@ -179,13 +174,8 @@ export default class AttCatManager {
       if (childIds.length === 0) return;
       for (let document of documents) {
         if (childIds.includes(document._id)) {
-          const node = {
-            [labelName]: document.name,
-            _id: document._id,
-            children: []
-          };
-          currNode.children.push(node);
-          this._buildTree(documents, labelName, node, tree, document.children);
+          currNode.children.push({ [labelName]: document.name, _id: document._id, properties: document.properties, children: [] });
+          this._buildTree(documents, labelName, tree[tree.length-1], tree, document.children);
         }
       }
     }
@@ -195,31 +185,17 @@ export default class AttCatManager {
     // basis
     if (!currNode) {
       for (let node of tree) {
-        const document = {
-          _id: node._id,
-          name: node.title,
-          optional: node.optional,
-          children: []
-        };
-        documents.push(document);
-        this._flatTree(tree, documents, node, document);
+        documents.push({ _id: node._id, name: node.title, properties: node.properties, children: [] });
+        this._flatTree(tree, documents, node, documents[documents.length-1]);
       }
       return documents;
     } else {
       if (!currNode.children || currNode.children.length === 0) return;
       for (let node of currNode.children) {
         currDocument.children.push(node._id);
-        const document = {
-          _id: node._id,
-          name: node.title,
-          optional: node.optional,
-          children: [],
-          parent: currNode._id
-        };
-        documents.push(document);
-        this._flatTree(tree, documents, node, document);
+        documents.push({ _id: node._id, name: node.title, properties: node.properties, children: [], parent: currNode._id });
+        this._flatTree(tree, documents, node, documents[documents.length-1]);
       }
     }
-
   }
 }
