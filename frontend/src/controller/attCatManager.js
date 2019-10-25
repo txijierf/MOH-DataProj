@@ -143,6 +143,63 @@ export default class AttCatManager {
 
   removeCategoryGroup = (_id) => this.removeGroup(false, _id);
 
+  // TODO : Transfer methods elsewhere - doesn't belong here
+  getGrouplookup = () => {
+    console.log("Fetching groups");
+    return axios.get(`${config.server}/api/v2/grouplookup`, axiosConfig)
+      .then(response => {
+        if(check(response)) {
+          return response.data;
+        }
+      });
+  };
+
+  // getGroupLookupGroup = (group) => {
+  //   return axios.get(`${config.server}/api/v2/grouplookup/${group}`, axiosConfig)
+  //     .then(response => {
+  //       if(check(response)) {
+  //         return response.data;
+  //       }
+  //     });
+  // };
+
+  // getPeriods = () => {
+  //   return axios.get(`${config.server}/api/v2/period`, axiosConfig)
+  //     .then(response => {
+  //       if(check(response)) {
+  //         return response.data;
+  //       }
+  //   });
+  // }
+
+  // addPeriod = () => {
+  //   return axios.get(`${config.server}/api/v2/period`, axiosConfig)
+  //     .then(response => {
+  //       if(check(response)) {
+  //         return response.data;
+  //       }
+  //     });
+  // }
+
+  // addGrouplookupGroup = (title) => {
+  //   console.log("Adding group", title);
+  //   return axios.post(`${config.server}/api/v2/grouplookup`, { title }, axiosConfig)
+  //     .then(response => {
+  //       if(check(response)) {
+  //         return response.data;
+  //       }
+  //     });
+  // };
+
+  // deleteGroupLookupGroup = (title) => {
+  //   return axios.delete(`${config.server}/api/v2/grouplookup/${title}`, axiosConfig)
+  //     .then(response => {
+  //       if(check(response)) {
+  //         return response.data;
+  //       }
+  //     });
+  // }
+
   /**
    * Generate a _id
    * @param {number} [number=1]

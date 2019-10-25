@@ -86,3 +86,10 @@ export async function userSubmitPackage(packageName, organization, {userNotes}) 
     return response.data;
   }
 }
+
+export async function adminPackageApproval(packageName, organization, decision) {
+  const response = await axios.put(config.server + "/api/v2/admin/approval", {packageName, organization, decision}, axiosConfig);
+  if (check(response)) {
+    return response.data;
+  }
+}

@@ -13,6 +13,8 @@ const packageValueSchema = new mongoose.Schema({
     // Users may submit some files, this does not include excel workbooks.
     userFiles: [{buffer: Buffer, name: String}],
 
+    approveStatus: { type: String, default: "TBD" },
+
     // Submit history
     histories: [{
         userNotes: String,

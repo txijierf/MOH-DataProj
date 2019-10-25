@@ -62,7 +62,12 @@ export default {
           url: '/category/group',
           icon: 'mdi mdi-checkbook',
         },
-        {
+        { 
+          name: 'Group Lookup',
+          url: '/grouplookup',
+          icon: 'mdi mdi-checkbook',
+        },
+          {
           name: 'Import ID',
           url: '/import/id',
           icon: 'mdi mdi-application-import',

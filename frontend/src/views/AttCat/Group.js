@@ -17,7 +17,7 @@ import {
 } from "@material-ui/core";
 import {withStyles} from "@material-ui/core/es";
 import PropTypes from "prop-types";
-import SortableTree, {toggleExpandedForAll, changeNodeAtPath, addNodeUnderParent, removeNodeAtPath} from 'react-sortable-tree';
+import SortableTree, {toggleExpandedForAll, changeNodeAtPath, addNodeUnderParent, removeNodeAtPath, getNodeAtPath} from 'react-sortable-tree';
 import 'react-sortable-tree/style.css';
 import {UnfoldLess, UnfoldMore, Add, Search, Storage, NavigateBefore, NavigateNext, Delete, Edit, Save, Cancel} from "@material-ui/icons";
 import {ToolBarDivider} from "../Excel/components/ExcelToolBarUser";
@@ -60,6 +60,12 @@ const StorageButton = ({ handleClick }) => (
   </IconButton>
 );
 
+const AddButton = ({ handleClick }) => (
+  <IconButton onClick={handleClick}>
+    <Add fontSize="small"/>
+  </IconButton>
+);
+
 const CancelButton = ({ handleClick }) => (
   <IconButton aria-label="Cancelling changes to this group" onClick={handleClick}>
     <Cancel fontSize="small"/> 
@@ -87,7 +93,6 @@ const EditInput = ({ value, handleInputChange, handleSubmit, handleCancelEdit })
 
 const PropertyTree = ({ treeData, handleChange, handleDelete }) => (
   <div style={{ height: 500, width: 400 }}>
-    {console.log("tree data", treeData)}
     <SortableTree 
       treeData={treeData}
       onChange={handleChange}
@@ -101,19 +106,16 @@ const PropertyTree = ({ treeData, handleChange, handleDelete }) => (
   </div>
 );
 
-const PropertiesTreeHeader = ({ handleAdd }) => {
+const PropertiesTreeHeader = ({ handleAdd }) => (
+  <AppBar position="static" color="default">
+    <Grid container>
+      <Button aria-label="Add" onClick={handleAdd}>
+        <Add fontSize="small"/>
+      </Button>
+    </Grid>
+  </AppBar>
+);
 
-
-  return (
-    <AppBar position="static" color="default">
-      <Grid container>
-        <Button aria-label="Add" onClick={handleAdd}>
-          <Add fontSize="small"/>
-        </Button>
-      </Grid>
-    </AppBar>
-  );
-};
 
 const PropertyDialog = ({ open, newPropertyName, handleClose, handleSave, optionalChecked, handlePropertyNameChange, handleOptionalToggle }) => (
   <Dialog open={open} onClose={handleClose}>
@@ -133,7 +135,7 @@ const PropertiesDialog = ({ node, path, currentNodePropertyTreeData, open, handl
   const [ propertyDialog, setPropertyDialog ] = useState(false);
   const [ propertyOptional, setNewPropertyOptional ] = useState(false);
   const [ property, setProperty ] = useState("");
-
+  
   const handleOpenPropertyDialog = () => setPropertyDialog(true);
   const handleClosePropertyDialog = () => setPropertyDialog(false);
 
@@ -181,6 +183,31 @@ const GroupDialog = ({ open, value, handleChange, handleClose, handleAdd }) => (
   </Dialog>
 );
 
+const PropertyValueTree = ({ treeData, handleChange }) => (
+  <div style={{ height: 500, width: 400 }}>
+    <SortableTree
+      treeData={treeData}
+      onChange={(e) => handleChange(e)}
+      canDrag={false}
+    />
+  </div>
+);
+
+const PropertiesValueDialog = ({ open, path, getNodeKey, handleClose, treeData, handlePropertiesChange, currentNodePropertyTreeData }) => {
+  const { properties } = getNodeAtPath({ treeData, path: [path[0]], getNodeKey }).node;
+
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle id="form-dialog-title">Property Value</DialogTitle>
+      <DialogContent>
+        <PropertyValueTree treeData={properties} handleChange={handlePropertiesChange}/>
+      </DialogContent>
+      <DialogActions>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 class AttCatGroup extends Component {
 
   constructor(props) {
@@ -193,7 +220,7 @@ class AttCatGroup extends Component {
       searchQuery: '',
       searchFocusOffset: 0,
       searchFoundCount: null,
-      newGroupDialog: false,
+      propertiesDialog: false,
       currentNode: {},
       currentPath: [],
       currentNodePropertyTreeData: [],
@@ -214,7 +241,6 @@ class AttCatGroup extends Component {
   handleSave = async treeData => {
     if (!treeData) treeData = this.state.treeData;
     try {
-      console.log(treeData)
       await this.attCatManager.updateGroup(this.mode === 'att', treeData);
       return true;
     } catch (err) {
@@ -335,19 +361,19 @@ class AttCatGroup extends Component {
   };
 
   handleOpenPropertyDialog = (node, path) => () => {
-    this.setState({ newGroupDialog: true, currentNode: node, currentNodePropertyTreeData: constructPropertyTreeData(node.properties), currentPath: path }); 
+    this.setState({ propertiesDialog: true, currentNode: node, currentNodePropertyTreeData: constructPropertyTreeData(node.properties), currentPath: path }); 
   }
 
   handleClosePropertyDialog = () => {
-    this.setState({ newGroupDialog: false, currentNode: {}, currentNodePropertyTreeData: [], currentPath: [] });
+    this.setState({ propertiesDialog: false, currentNode: {}, currentNodePropertyTreeData: [], currentPath: [] });
   };
 
   handleClosePropertiesDialog = () => {
-    this.setState({ newGroupDialog: false, currentNode: {}, currentNodePropertyTreeData: [], currentPath: [] });
+    this.setState({ propertiesDialog: false, currentNode: {}, currentNodePropertyTreeData: [], currentPath: [] });
   };
 
   handleAddProperty = (node, path, newProperty, optional) => {
-    const newProperties = [ ...node.properties, { title: newProperty, children: [], optional } ];
+    const newProperties = [ ...this.state.currentNodePropertyTreeData, { title: newProperty, children: [], optional } ];
     this.setState({ 
       treeData: changeNodeAtPath({
         treeData: this.state.treeData,
@@ -360,6 +386,7 @@ class AttCatGroup extends Component {
   };
 
   handlePropertiesChange = (newPropertiesTreeData) => {
+    console.log(newPropertiesTreeData);
     this.setState({
       treeData: changeNodeAtPath({
         treeData: this.state.treeData,
@@ -373,7 +400,7 @@ class AttCatGroup extends Component {
 
   handleDeleteProperty = (index) => {
     const node = this.state.currentNode;
-    const newProperties = index === 0 && node.properties.length === 1 ? [] : [ ...node.properties.slice(0, index), ...node.properties.slice(index + 1) ]
+    const newProperties = index === 0 && this.state.currentNodePropertyTreeData.length === 1 ? [] : [ ...this.state.currentNodePropertyTreeData.slice(0, index), ...this.state.currentNodePropertyTreeData.slice(index + 1) ]
     this.setState({ 
       treeData: changeNodeAtPath({
         treeData: this.state.treeData,
@@ -449,6 +476,7 @@ class AttCatGroup extends Component {
                   matches.length > 0 ? searchFocusOffset % matches.length : 0,
               })
             }}
+            maxDepth={2}
             generateNodeProps={({node, path}) => {
               const EditMode = () => [ <SaveButton node={node} path={path} handleClick={this.handleSaveEdit(node, path)}/>, <CancelButton node={node} path={path} handleClick={this.handleCancelEdit(node, path)}/> ];
               const NormalMode = () => [ <StorageButton handleClick={this.handleOpenPropertyDialog(node, path)}/>, <EditButton handleClick={this.handleEdit(node, path)}/> ];
@@ -470,16 +498,12 @@ class AttCatGroup extends Component {
           />
         </div>
         <GroupDialog open={this.state.dialog} value={this.state.dialogValue} handleChange={this.handleDialogValueChange} handleClose={this.handleCloseDialog} handleAdd={this.handleDialogAdd}/>
-        <PropertiesDialog 
-          node={this.state.currentNode} 
-          path={this.state.currentPath} 
-          currentNodePropertyTreeData={this.state.currentNodePropertyTreeData} 
-          open={this.state.newGroupDialog} 
-          handleClose={this.handleClosePropertyDialog} 
-          handleSave={this.handleAddProperty}
-          handleDeleteProperty={this.handleDeleteProperty}
-          handlePropertiesChange={this.handlePropertiesChange}
-        />
+        {
+          this.state.currentPath.length < 2 
+            ? <PropertiesDialog node={this.state.currentNode} path={this.state.currentPath} currentNodePropertyTreeData={this.state.currentNodePropertyTreeData} open={this.state.propertiesDialog} handleClose={this.handleClosePropertyDialog} handleSave={this.handleAddProperty} handleDeleteProperty={this.handleDeleteProperty} handlePropertiesChange={this.handlePropertiesChange}/> 
+            : <PropertiesValueDialog open={this.state.propertiesDialog} path={this.state.currentPath} getNodeKey={this.getNodeKey} handleClose={this.handleClosePropertyDialog} handlePropertiesChange={this.handlePropertiesChange} currentNodePropertyTreeData={this.state.currentNodePropertyTreeData} treeData={this.state.treeData}/>
+        }
+
       </Paper>
     )
   }

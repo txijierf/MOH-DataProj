@@ -1,0 +1,21 @@
+.groupSelect { 
+  margin-right: 10px;
+  width: 300px;
+  z-index: 1000000000;
+  background: white;
+}
+
+.groupMenu {
+  display: flex;
+}
+
+.groupLookup {
+  display: flex;
+  flex-flow: column nowrap;
+  padding: 20px;
+}
+
+.groupValues {
+  height: 1000px;
+  margin-bottom: 20px;;
+}

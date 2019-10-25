@@ -9,6 +9,7 @@ module.exports = {
             return next(error.api.NO_PERMISSION);
         }
         const groupNumber = req.session.user.groupNumber;
+        console.log("Fetching orgs")
         try {
             let organizations;
             if (req.params.mode === 'simplified') {
@@ -29,10 +30,11 @@ module.exports = {
         }
         const groupNumber = req.session.user.groupNumber;
 
-        const {name, users, managers, types} = req.body;
+        const {name, users, managers, types, code, address, contactPerson, telephone } = req.body;
+        console.log(req.body);
         if (!name || name.length === 0) return next({status: 400, message: 'Package name is required.'});
 
-        const data = removeNil({users, managers, types});
+        const data = removeNil({users, managers, types, code, address, contactPerson, telephone});
         try {
             // TODO: validate the given data (users, managers, types)
             const oldDoc = await Organization.findOne({groupNumber, name});

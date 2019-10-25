@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { buildErrorParams } from "../../controller/common";
-import { adminGetPackage, userGetPackage, userSubmitPackage } from "../../controller/package";
+import { adminGetPackage, userGetPackage, userSubmitPackage, adminPackageApproval } from "../../controller/package";
 
 import uniqid from "uniqid";
 
@@ -10,6 +10,8 @@ import PackageCard from "./components/Card";
 import Loading from "../components/Loading";
 
 import { makeStyles } from "@material-ui/core/styles";
+
+import { Badge } from "reactstrap";
 
 const useStyles = makeStyles(theme => ({
   containerStyle: {
@@ -25,6 +27,14 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+const ApproverButtons = ({ handleApprove, handleReject, handleResetApproval }) => (
+  <div>
+    <Button variant="contained" color="primary" onClick={handleApprove}>Approve</Button>
+    <Button variant="contained" color="secondary" onClick={handleReject}>Reject</Button>
+    <Button variant="contained" onClick={handleResetApproval}>Reset</Button>
+  </div>
+);
+
 const Package = ({ name, handleOpenFile }) => (
   <Grid item>
     <PackageCard type="excel" fileName={name} handleOpenFile={handleOpenFile}/>
@@ -38,7 +48,12 @@ const UserContents = ({ userNotes, noteStyle, handleChangeUserNotes, handleSubmi
   </React.Fragment>
 );
 
-const AdminContents = ({ userNotes, noteStyle, handleChangeUserNotes }) => <TextField disabled label="User Notes" value={userNotes} className={noteStyle} onChange={handleChangeUserNotes} multiline margin="normal" fullWidth />;
+const AdminContents = ({ userNotes, noteStyle, isSubmitted, handleChangeUserNotes, handleApprove, handleResetApproval, handleReject }) => (
+  <div>
+    <TextField disabled label="User Notes" value={userNotes} className={noteStyle} onChange={handleChangeUserNotes} multiline margin="normal" fullWidth />
+    {isSubmitted && <ApproverButtons handleApprove={handleApprove} handleReject={handleReject} handleResetApproval={handleResetApproval}/>}
+  </div>
+);
 
 const PackageView = ({ showMessage, params, match, history }) => {
   const admin = params.mode === "admin";
@@ -53,6 +68,7 @@ const PackageView = ({ showMessage, params, match, history }) => {
   useEffect(() => {
     (admin ? adminGetPackage : userGetPackage)(packageName, organization)
       .then((data) => {
+        console.log(data)
         setDataFetched(true);
 
         if(data !== {} && typeof data !== "undefined") {
@@ -91,12 +107,30 @@ const PackageView = ({ showMessage, params, match, history }) => {
   const handleSubmit = async () => {
     try {
       const { message } = await userSubmitPackage(packageName, organization, {userNotes: userNotes});
+      setData({ ...data, approveStatus: "TBD" });
       showMessage(message, "success");
     } catch (e) {
       showMessage(...buildErrorParams(e));
     }
   };
 
+  const handleApproval = (decision) => {
+    adminPackageApproval(packageName, organization, decision)
+      .then(({ message }) => {
+        setData({ ...data, approveStatus: decision });
+        showMessage(message, "success");
+      })
+      .catch((e) => showMessage(...buildErrorParams(e)));
+  };
+
+  const handleApprove = () => handleApproval("Approved");
+  const handleReject = () => handleApproval("Rejected");
+  const handleResetApproval = () => handleApproval("TBD");
+
+  const isSubmitted = data !== null && data !== {} && typeof data !== "undefined";
+
+
+  const approveStatus = data ? data.approveStatus : "TBD";
   return (
     <Fade in>
       <Paper className={containerStyle}>
@@ -108,9 +142,10 @@ const PackageView = ({ showMessage, params, match, history }) => {
           <AllWorkbooks/>
         </Grid>
         <br/>
+        <Badge color={approveStatus === "TBD" ? "secondary" : (approveStatus === "Rejected" ? "danger" : "success")}>{approveStatus}</Badge>
         {
           admin 
-            ? <AdminContents userNotes={userNotes} noteStyle={noteStyle} handleChangeUserNotes={handleChangeUserNotes}/> 
+            ? <AdminContents isSubmitted={isSubmitted} userNotes={userNotes} noteStyle={noteStyle} handleChangeUserNotes={handleChangeUserNotes} handleApprove={handleApprove} handleReject={handleReject} handleResetApproval={handleResetApproval}/> 
             : <UserContents userNotes={userNotes} noteStyle={noteStyle} handleChangeUserNotes={handleChangeUserNotes} handleSubmit={handleSubmit}/>
         }
       </Paper>

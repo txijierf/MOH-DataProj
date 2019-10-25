@@ -14,7 +14,7 @@ const packageSchema = new mongoose.Schema({
     // reference to User._id
     organizations: [{type: ObjectId, ref: 'Organization'}],
     organizationTypes: [{type: ObjectId, ref: 'OrganizationType'}],
-
+    
     // Workbooks this package includes.
     // reference to Workbook._id
     workbooks: [{type: ObjectId, ref: 'Workbook'}],
@@ -27,9 +27,6 @@ const packageSchema = new mongoose.Schema({
 
     editStartDate: Date, 
     editEndDate: Date, 
-    reviewStartDate: Date, 
-    reviewEndDate: Date, 
-    approvalStartDate: Date, 
     approvalEndDate: Date,
 
     editors: [{type: ObjectId, ref: 'User'}],
@@ -45,9 +42,7 @@ const packageSchema = new mongoose.Schema({
         user: {type: ObjectId, ref: 'User'},
         status: String,
         reason: String
-    }],
-
-    approveStatus: { type: String, default: "TBD" }
+    }]
 });
 
 module.exports = mongoose.model('Package', packageSchema);

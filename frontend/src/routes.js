@@ -11,6 +11,7 @@ const Workbooks = React.lazy(() => import('./views/Workbooks/Workbooks' /* webpa
 
 const AttCat = React.lazy(() => import('./views/AttCat/AttCat' /* webpackChunkName: "attCat" */));
 const AttCatGroup = React.lazy(() => import('./views/AttCat/Group' /* webpackChunkName: "attCatGroup" */));
+const GroupLookup = React.lazy(() => import('./views/AttCat/GroupLookup'));
 // const Excel = React.lazy(() => import('./views/ExcelV2'/* webpackChunkName: "excel" */));
 const Excel = React.lazy(() => import('./views/Excel/Excel'/* webpackChunkName: "excel" */));
 
@@ -44,8 +45,11 @@ const routes = [
   {path: '/workbooks/attributes', exact: true, name: 'Attributes', component: AttCat, params: {mode: 'att'}},
   {path: '/workbooks/categories', exact: true, name: 'Categories', component: AttCat, params: {mode: 'cat'}},
 
+
   {path: '/attribute/group', exact: true, name: 'Attribute Group', component: AttCatGroup, params: {mode: 'att'}},
   {path: '/category/group', exact: true, name: 'Category Group', component: AttCatGroup, params: {mode: 'cat'}},
+  // TODO : Add look up here
+  {path: '/grouplookup', exact: true, name: 'Group Lookup', component: GroupLookup, params: { mode: "admin" } },
 
   {path: '/system', exact: true, name: 'System Info', component: SystemInfo},
   {path: '/import/id', exact: true, name: 'Import ID', component: ImportId},

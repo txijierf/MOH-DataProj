@@ -17,7 +17,6 @@ const getMuiTheme = () => createMuiTheme({
   }
 });
 
-
 const useStyles = makeStyles(theme => ({
   name: {
     color: theme.palette.primary.dark,
@@ -30,17 +29,18 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-
+// TODO : Make code unique!!
 export default function Organizations(props) {
   const [organizations, setOrganizations] = useState([]);
   const [types, setTypes] = useState([]);
   const [dialog, setDialog] = useState(false);
-  const [dialogData, setDialogData] = useState({name: '', users: [], managers: [], types: [], edit: false});
+  const [dialogData, setDialogData] = useState({name: '', users: [], managers: [], types: [], code: "", address: "", contactPerson: "", telephone: "",  edit: false});
   const [users, setUsers] = useState([]);
   const classes = useStyles();
 
   useEffect(() => {
     getOrganizations().then(organizations => {
+      console.log(organizations);
       setOrganizations(organizations)
     });
     getOrganizationTypes().then(types => setTypes(types.map(type => [type._id, type.name])));
@@ -54,20 +54,28 @@ export default function Organizations(props) {
 
   const closeDialog = () => setDialog(false);
   const openDialog = () => {
-    setDialogData({name: '', users: [], managers: [], types: [], edit: false});
+    setDialogData({name: '', users: [], managers: [], types: [], code: "", address: "", contactPerson: "", telephone: "", edit: false});
     setDialog(true);
   };
   const openEditDialog = (name, tableMeta) => () => {
-    let [name, users, managers, types] = tableMeta.rowData;
+    let [name, users, managers, types, code, address, contactPerson, telephone] = tableMeta.rowData;
     users = users.map(user => user._id);
     managers = managers.map(manager => manager._id);
     types = types.map(type => type._id);
-    setDialogData({name, users, managers, types, edit: true});
+    setDialogData({name, users, managers, types, code, address, contactPerson, telephone, edit: true});
     setDialog(true);
   };
   const onChangeDialog = name => e => {
     if (name === 'name') {
       setDialogData({...dialogData, name: e.target.value});
+    } else if(name === "code") {
+      setDialogData({...dialogData, code: e.target.value});
+    } else if(name === "address") {
+      setDialogData({...dialogData, address: e.target.value});
+    } else if(name === "contactPerson") {
+      setDialogData({...dialogData, contactPerson: e.target.value});
+    } else if(name === "telephone") {
+      setDialogData({...dialogData, telephone: e.target.value});
     } else if (name === 'managers') {
       const managers = [];
       for (const manager of e) {
@@ -137,7 +145,25 @@ export default function Organizations(props) {
           return names.join(', ');
         },
       }
-    }], [classes]);
+    },
+    {
+      name: 'code',
+      label: 'Code'
+    },
+    {
+      name: 'address',
+      label: 'Address'
+    },
+    //TODO : Change contact person later
+    {
+      name: 'contactPerson',
+      label: 'Contact Person'
+    },
+    {
+      name: 'telephone',
+      label: 'Telephone'
+    },
+  ], [classes]);
 
   const options = useMemo(() => ({
     print: false,

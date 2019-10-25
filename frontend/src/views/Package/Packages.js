@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
  * Precondition: approval status is not rejected or approved.
  * Determines the phase of the workflow based on the start and end Date of each phase.
  */
-const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate) => {
+const computeWorkingPhase = (editStartDate, editEndDate, approvalEndDate) => {
   const currentDate = Date.now();
   let phase;
 
@@ -31,34 +31,22 @@ const computeWorkingPhase = (editStartDate, editEndDate, reviewStartDate, review
     phase = "Pre-edit";
   } else if(currentDate < editEndDate) {
     phase = "Edit";
-  } else if(currentDate < reviewStartDate) {
-    phase = "Pre-review";
-  } else if(currentDate < reviewEndDate) {
-    phase = "Review";
-  } else if(currentDate < approvalStartDate) {
-    phase = "Pre-approval";
   } else if(currentDate < approvalEndDate) {
     phase = "Approval";
   } else {
-    phase = "Post-approval";
+    phase = "Completed";
   };
 
   return phase;
 };
 
-const Package = ({ fileName, published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, handleOpenDeleteDialog, handleOpenFile }) => {
+const Package = ({ fileName, published, editStartDate, editEndDate, approvalEndDate, handleOpenDeleteDialog, handleOpenFile }) => {
   let badges = [ { text: published ? "Published" : "Unpublished", color: published ? "success": "secondary" } ];
 
   if(published) {
-    let phase = approveStatus !== "Approved" || approveStatus !== "Rejected" 
-      ? computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(reviewStartDate), new Date(reviewEndDate), new Date(approvalStartDate), new Date(approvalEndDate))
-      : "Completed";
+    let phase = computeWorkingPhase(new Date(editStartDate), new Date(editEndDate), new Date(approvalEndDate));
 
     badges.push({ text: phase, color: phase === "Completed" ? "success": "secondary" });  
-    
-    if(approveStatus !== "TBD") {
-      badges.push({ text: `Decision: ${approveStatus}`, color: approveStatus === "Approved" ? "success" : "danger" });
-    }
   };
 
   return (
@@ -192,7 +180,7 @@ const CreatePackage = ({ showMessage, history, params }) => {
         
   const AllPackages = useMemo(() => (
     packages.map((_package) => {
-      const { published, approveStatus, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate, name } = _package;
+      const { published, editStartDate, editEndDate, approvalEndDate, name } = _package;
 
       const handleOpenFile = ({ target }) => {
         isAdmin
@@ -210,14 +198,9 @@ const CreatePackage = ({ showMessage, history, params }) => {
           key={uniqid()}
           fileName={name} 
           published={published} 
-          approveStatus={approveStatus}
           editStartDate={editStartDate}
           editEndDate={editEndDate}
-          reviewStartDate={reviewStartDate}
-          reviewEndDate={reviewEndDate}
-          approvalStartDate={approvalStartDate} 
           approvalEndDate={approvalEndDate}
-          approveStatus={approveStatus} 
           handleOpenDeleteDialog={isAdmin && handleOpenDeleteDialog} 
           handleOpenFile={handleOpenFile}
         />

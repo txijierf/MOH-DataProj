@@ -23,9 +23,9 @@ export async function getOrganizations(simplified) {
   }
 }
 
-export async function updateOrganization({name, users, managers, types}) {
+export async function updateOrganization(data) {
   const response = await axios.post(config.server + '/api/v2/organizations',
-    {name, users, managers, types}, axiosConfig);
+    data, axiosConfig);
   if (check(response)) {
     return response.data;
   }

@@ -4,7 +4,7 @@ const {packageController} = require('../../controller/v2');
 const {
     userGetWorkbook, userGetPackage, adminGetPackage, adminCreatePackage, adminGetAllPackages, userGetAllPackages,
     adminDeletePackage, userSaveWorkbook, userSubmitPackage, adminGetPackageOrganizations, adminGetUserWorkbook,
-    adminEditPackage
+    adminEditPackage, adminPackageApproval
 } = packageController;
 
 router.get('/api/v2/admin/packages/:name/:organization', adminGetPackage);
@@ -30,5 +30,9 @@ router.post('/api/v2/admin/packages', adminCreatePackage);
 router.delete('/api/v2/admin/packages/:name', adminDeletePackage);
 
 router.post('/api/v2/packages/:packageName/:organization', userSubmitPackage);
+
+router.put('/api/v2/packages/:packageName/:organization', userSubmitPackage);
+
+router.put('/api/v2/admin/approval', adminPackageApproval);
 
 module.exports = router;

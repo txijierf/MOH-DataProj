@@ -36,53 +36,7 @@ async function userGetPackageAndWorkbook(next, currentUserId, organization, grou
 }
 
 module.exports = {
-    /**
-     * Admin gets a single package.
-     */
-    adminGetPackage: async (req, res, next) => {
-        console.log("Gettting packaaaaaaaaaaage")
-        if (!checkPermission(req, Permission.PACKAGE_MANAGEMENT)) {
-            return next(error.api.NO_PERMISSION);
-        }
-        const groupNumber = req.session.user.groupNumber;
-        const {name, organization} = req.params; // package name, organization name
-        try {
-            const pack = await Package.findOne({groupNumber, name}).populate({
-                path: 'workbooks',
-                select: 'name'
-            });
-            if (!pack) return next({status: 400, message: `Package (${name}) does not exist.`});
 
-            const orgDoc = await Organization.findOne({groupNumber, name: organization});
-            if (!orgDoc) return next({status: 400, message: `Organizations (${organization}) does not exist.`});
-
-            // if the package is submitted, then the admin will get the package value.
-            const packageValue = await PackageValue.findOne({groupNumber, package: pack._id, organization: orgDoc._id});
-            if (packageValue.histories.length > 0) {
-                const {userNotes, submittedBy, date} = packageValue.histories[packageValue.histories.length - 1];
-                const {workbooks, startDate, endDate, adminNotes, adminFiles, name} = pack;
-                const submittedUser = await User.findById(submittedBy, 'username firstName lastName email');
-                return res.json({
-                    success: true,
-                    package: {
-                        userNotes, submittedUser, date, workbooks, startDate, endDate, adminNotes, organization,
-                        adminFiles, name
-                    }
-                })
-            }
-            // } else {
-                // TODO: Redesign this... Not supposed to throw an error
-                // return next({
-                //     status: 400,
-                //     message: `The organization (${organization}) has not submitted this package (${name}).`
-                // });
-            // }
-            res.json({});
-
-        } catch (e) {
-            next(e);
-        }
-    },
 
     adminGetPackageOrganizations: async (req, res, next) => {
         if (!checkPermission(req, Permission.PACKAGE_MANAGEMENT)) {
@@ -108,9 +62,27 @@ module.exports = {
         const organization = req.params.organization;
         const name = req.params.name; // package name
         try {
-            const result = await userGetPackageAndWorkbook(next, currentUserId, organization, groupNumber, name);
+            let result = await userGetPackageAndWorkbook(next, currentUserId, organization, groupNumber, name);
             if (!result) return;
-            res.json({success: true, package: result.pack})
+
+            const orgDoc = await Organization.findOne({name: organization});
+            if (!orgDoc) return next({status: 400, message: `Organizations (${organization}) does not exist.`});
+
+            const packageValue = await PackageValue.findOne({ organization: orgDoc._id }, "approveStatus");
+
+            let approveStatus;
+
+
+            // ? Is this needed???
+            if(packageValue) {
+                approveStatus = packageValue.approveStatus;
+            } else {
+                approveStatus = "TBD";
+            }
+
+            let package = { ...result.pack._doc, approveStatus };
+
+            res.json({success: true, package })
         } catch (e) {
             next(e);
         }
@@ -173,10 +145,15 @@ module.exports = {
             return next(error.api.NO_PERMISSION);
         }
         const groupNumber = req.session.user.groupNumber;
-        const { name, published = false, orgIds = [], workbookIds = [], adminNotes = '', adminFiles, editors, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate } = req.body;
+        const { name, published = false, orgIds = [], workbookIds = [], adminNotes = '', adminFiles, editors, editStartDate, editEndDate, approvalEndDate } = req.body;
         if (!name) {
             return next({status: 400, message: 'package must have a name.'});
         }
+
+        if(editEndDate < editStartDate || approvalEndDate < editEndDate) {
+            return next({ status: 400, message: "Invalid date order." });
+        }
+
         const organizations = [], workbooks = []; // filtered
         try {
             const pkg = await Package.findOne({groupNumber, name});
@@ -243,8 +220,10 @@ module.exports = {
             reviewers = reviewers.map((user) => ({ user, status: "TBD", reason: "" }));
 
             approvers = approvers.map((user) => ({ user, status: "TBD", reason: "" }));
+            
+            const organizationsStatus = orgIds.map((orgId) => ({ organization: orgId }));
 
-            const newPackage = new Package({ name, published, organizations, workbooks, adminNotes, adminFiles, groupNumber, _id: packageId, reviewers, approvers, editors, editStartDate, editEndDate, reviewStartDate, reviewEndDate, approvalStartDate, approvalEndDate });
+            const newPackage = new Package({ name, published, organizations, workbooks, adminNotes, adminFiles, groupNumber, _id: packageId, reviewers, approvers, editors, organizationsStatus, editStartDate, editEndDate, approvalEndDate });
             await newPackage.save();
             return res.json({success: true, message: `package (${name}) saved.`});
         } catch (e) {
@@ -575,7 +554,6 @@ module.exports = {
         }
     },
 
-    // TODO - Only allow if user is an editor and if the phase is edit?
     userSaveWorkbook: async (req, res, next) => {
         const {packageName, name, organization} = req.params;
         const groupNumber = req.session.user.groupNumber;
@@ -644,6 +622,7 @@ module.exports = {
         }
         valueDoc.markModified('values');
         await valueDoc.save();
+        packageValue.approveStatus = "TBD";
         packageValue.histories.push({
             userNotes: userNotes,
             // userFiles: packageValue.userFiles,
@@ -655,4 +634,74 @@ module.exports = {
         await packageValue.save();
         return res.json({success: true, message: `Package (${packageName}) submitted.`})
     },
+
+        /**
+     * Admin gets a single package.
+     */
+    adminGetPackage: async (req, res, next) => {
+        if (!checkPermission(req, Permission.PACKAGE_MANAGEMENT)) {
+            return next(error.api.NO_PERMISSION);
+        }
+        const groupNumber = req.session.user.groupNumber;
+        const {name, organization} = req.params; // package name, organization name
+        try {
+            const pack = await Package.findOne({groupNumber, name}).populate({
+                path: 'workbooks',
+                select: 'name'
+            });
+            if (!pack) return next({status: 400, message: `Package (${name}) does not exist.`});
+
+            const orgDoc = await Organization.findOne({groupNumber, name: organization});
+            if (!orgDoc) return next({status: 400, message: `Organizations (${organization}) does not exist.`});
+
+            // if the package is submitted, then the admin will get the package value.
+            const packageValue = await PackageValue.findOne({groupNumber, package: pack._id, organization: orgDoc._id});
+            if (packageValue.histories.length > 0) {
+                const { approveStatus } = packageValue;
+                const {userNotes, submittedBy, date} = packageValue.histories[packageValue.histories.length - 1];
+                const {workbooks, startDate, endDate, adminNotes, adminFiles, name} = pack;
+                const submittedUser = await User.findById(submittedBy, 'username firstName lastName email');
+
+                return res.json({
+                    success: true,
+                    package: {
+                        userNotes, submittedUser, date, workbooks, startDate, endDate, adminNotes, organization,
+                        adminFiles, name, approveStatus
+                    }
+                })
+            }
+            // } else {
+                // TODO: Redesign this... Not supposed to throw an error
+                // return next({
+                //     status: 400,
+                //     message: `The organization (${organization}) has not submitted this package (${name}).`
+                // });
+            // }
+            res.json({});
+
+        } catch (e) {
+            next(e);
+        }
+    },
+
+    /**
+     * TODO : Approve package and package value
+     * 
+     */
+    adminPackageApproval: async (req, res, next) => {
+        console.log("Request")
+        const { groupNumber, organization, decision } = req.body;
+        try {
+            const orgDoc = await Organization.findOne({name: organization});
+            if (!orgDoc) return next({status: 400, message: `Organizations (${organization}) does not exist.`});
+            
+            console.log("Updating package value", decision);
+            await PackageValue.findOneAndUpdate({ organization: orgDoc._id }, { approveStatus: decision });
+            res.json({ message: "Success!" });
+            console.log("Updated package value");
+        } catch(error) {
+            console.error("error", error);
+            next(error);
+        }
+    }
 };
