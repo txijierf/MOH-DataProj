@@ -30,7 +30,7 @@
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^5.0.1",
     "password-validator": "^5.0.2",
-    "systeminformation": "^4.14.8",
+    "systeminformation": "^4.27.11",
     "worker-threads-pool": "^2.0.0",
     "workerpool": "^3.1.2"
   },
