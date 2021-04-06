@@ -3203,10 +3203,10 @@ supports-color@^5.2.0, supports-color@^5.3.0:
   dependencies:
     has-flag "^3.0.0"
 
-systeminformation@^4.14.8:
-  version "4.14.11"
-  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-4.14.11.tgz#5c7f23d92586f2639a9d037a359890f7ab01c4ea"
-  integrity sha512-KlMaQQftyGUPjKzGRrATN5mpKrpdtrVk/KPuqPeu733bUgpokIhevg5zjKOb4Gur91XKdbdQCCja/oFsg5R4Dw==
+systeminformation@^5.6.4:
+  version "5.6.4"
+  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.6.4.tgz#5f32fcb05a5849e2a0e71b182c1f56ce32219310"
+  integrity sha512-b2tvW1R+qjNEoAGgh734EGLgqbDMghjsHRaWo36skAC6JM1tw1pitcGz/REt+qSIRSXbE4PKECojhaSrBRrEmw==
 
 tar@^4:
   version "4.4.11"
